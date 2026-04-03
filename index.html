@@ -3,6 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Content Security Policy — bloqueia scripts externos não autorizados -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+    font-src https://fonts.gstatic.com;
+    connect-src 'self' https://*.supabase.co wss://*.supabase.co;
+    img-src 'self' data:;
+    frame-src 'none';
+    object-src 'none';
+  " />
   <title>⚡ BoltBoost — Notas</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -1009,7 +1020,7 @@
 
       <div class="form-group">
         <label>Supabase Anon Key</label>
-        <input type="text" id="setup-key" placeholder="eyJhbGc..." autocomplete="off" />
+        <input type="password" id="setup-key" placeholder="eyJhbGc..." autocomplete="off" />
       </div>
 
       <div style="margin-bottom: 20px;">
@@ -1046,9 +1057,10 @@
 
       <button class="btn btn-primary" id="auth-btn" onclick="autenticar()">Entrar</button>
 
-      <div class="auth-toggle">
+      <!-- Registo desativado — apenas utilizadores convidados pelo administrador -->
+      <!--<div class="auth-toggle">
         <span id="auth-toggle-text">Não tens conta? <span onclick="toggleAuthMode()">Criar conta</span></span>
-      </div>
+      </div>-->
 
       <div style="margin-top:16px; text-align:center;">
         <button class="btn-ghost" style="font-size:12px;" onclick="mostrarSetup()">← Alterar credenciais Supabase</button>
@@ -1396,6 +1408,10 @@ CREATE TRIGGER notes_updated_at
     // =============================================
     let modoAuth = 'login'; // 'login' | 'registo'
 
+    // Rate limiting local — bloquear login após 5 tentativas falhadas
+    let tentativasLogin = 0;
+    let bloqueadoAte = null;
+
     function toggleAuthMode() {
       modoAuth = modoAuth === 'login' ? 'registo' : 'login';
       const isRegisto = modoAuth === 'registo';
@@ -1410,6 +1426,13 @@ CREATE TRIGGER notes_updated_at
     }
 
     async function autenticar() {
+      // Verificar bloqueio por rate limiting
+      if (bloqueadoAte && new Date() < bloqueadoAte) {
+        const seg = Math.ceil((bloqueadoAte - new Date()) / 1000);
+        mostrarErroAuth(`Demasiadas tentativas. Tenta novamente em ${seg} segundos.`);
+        return;
+      }
+
       const email = document.getElementById('auth-email').value.trim();
       const password = document.getElementById('auth-password').value;
       const btn = document.getElementById('auth-btn');
@@ -1419,24 +1442,36 @@ CREATE TRIGGER notes_updated_at
         return;
       }
 
+      // Validação básica de formato de email
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        mostrarErroAuth('Introduz um email válido.');
+        return;
+      }
+
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span>';
       esconderErroAuth();
 
-      let resultado;
-      if (modoAuth === 'login') {
-        resultado = await client.auth.signInWithPassword({ email, password });
-      } else {
-        resultado = await client.auth.signUp({ email, password });
-      }
+      // Apenas login — registo desativado
+      const resultado = await client.auth.signInWithPassword({ email, password });
 
       btn.disabled = false;
-      btn.textContent = modoAuth === 'login' ? 'Entrar' : 'Criar conta';
+      btn.textContent = 'Entrar';
 
       if (resultado.error) {
-        mostrarErroAuth(traduzirErroAuth(resultado.error.message));
-      } else if (modoAuth === 'registo' && !resultado.data?.session) {
-        mostrarErroAuth('Conta criada! Verifica o teu email para confirmar.', true);
+        tentativasLogin++;
+        // Bloquear após 5 tentativas falhadas por 2 minutos
+        if (tentativasLogin >= 5) {
+          bloqueadoAte = new Date(Date.now() + 2 * 60 * 1000);
+          tentativasLogin = 0;
+          mostrarErroAuth('Conta temporariamente bloqueada. Tenta novamente em 2 minutos.');
+        } else {
+          mostrarErroAuth(traduzirErroAuth(resultado.error.message));
+        }
+      } else {
+        // Login bem sucedido — reset tentativas
+        tentativasLogin = 0;
+        bloqueadoAte = null;
       }
     }
 
@@ -1462,6 +1497,7 @@ CREATE TRIGGER notes_updated_at
     }
 
     async function logout() {
+      pararVerificadorLembretes(); // parar pedidos à API após logout
       await client.auth.signOut();
       todasNotas = [];
       todasPastas = [];
@@ -1780,36 +1816,84 @@ CREATE TRIGGER notes_updated_at
     }
 
     function criarCardNota(nota) {
+      // Usar apenas DOM API — nunca innerHTML com dados da base de dados (previne XSS)
+      const prioridades = ['alta', 'media', 'baixa'];
+      const prioridade = prioridades.includes(nota.priority) ? nota.priority : 'media';
+
       const card = document.createElement('div');
-      card.className = `note-card p-${nota.priority}`;
+      card.className = `note-card p-${prioridade}`;
 
-      // Encontrar nome da pasta
       const pasta = todasPastas.find(f => f.id === nota.folder_id);
-
-      // Formatar data
-      const data = new Date(nota.created_at);
-      const dataStr = data.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' });
-
-      // Tem lembrete futuro ativo?
+      const dataStr = new Date(nota.created_at).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' });
       const temLembrete = nota.reminder_at && !nota.reminder_sent && new Date(nota.reminder_at) > new Date();
 
-      card.innerHTML = `
-        <div class="card-actions">
-          <button onclick="event.stopPropagation(); abrirModalNota('${nota.id}')">✎</button>
-          <button class="del-btn" onclick="event.stopPropagation(); confirmarEliminarNota('${nota.id}', \`${nota.title.replace(/`/g, "'")}\`)">✕</button>
-        </div>
-        <div class="card-top">
-          <span class="card-title">${escapeHtml(nota.title)}</span>
-          <span class="badge badge-${nota.priority}">${nota.priority}</span>
-        </div>
-        ${nota.description ? `<p class="card-desc">${escapeHtml(nota.description)}</p>` : ''}
-        <div class="card-meta">
-          <span class="card-date">${dataStr}</span>
-          ${pasta ? `<span class="badge-folder">📁 ${escapeHtml(pasta.name)}</span>` : ''}
-          ${temLembrete ? `<span class="badge-reminder">⏰ ${formatarDataLembrete(nota.reminder_at)}</span>` : ''}
-        </div>`;
+      // Botões de ação (IDs são UUIDs do Supabase — seguros mas usamos dataset)
+      const acoes = document.createElement('div');
+      acoes.className = 'card-actions';
 
-      card.onclick = () => abrirModalNota(nota.id);
+      const btnEditar = document.createElement('button');
+      btnEditar.textContent = '✎';
+      btnEditar.addEventListener('click', (e) => { e.stopPropagation(); abrirModalNota(nota.id); });
+
+      const btnApagar = document.createElement('button');
+      btnApagar.className = 'del-btn';
+      btnApagar.textContent = '✕';
+      btnApagar.addEventListener('click', (e) => { e.stopPropagation(); confirmarEliminarNota(nota.id, nota.title); });
+
+      acoes.appendChild(btnEditar);
+      acoes.appendChild(btnApagar);
+
+      // Topo: título + badge prioridade
+      const topo = document.createElement('div');
+      topo.className = 'card-top';
+
+      const titulo = document.createElement('span');
+      titulo.className = 'card-title';
+      titulo.textContent = nota.title; // textContent é seguro contra XSS
+
+      const badge = document.createElement('span');
+      badge.className = `badge badge-${prioridade}`;
+      badge.textContent = prioridade;
+
+      topo.appendChild(titulo);
+      topo.appendChild(badge);
+
+      // Descrição
+      const desc = document.createElement('p');
+      desc.className = 'card-desc';
+      if (nota.description) {
+        desc.textContent = nota.description; // textContent é seguro
+      }
+
+      // Meta: data, pasta, lembrete
+      const meta = document.createElement('div');
+      meta.className = 'card-meta';
+
+      const dataEl = document.createElement('span');
+      dataEl.className = 'card-date';
+      dataEl.textContent = dataStr;
+      meta.appendChild(dataEl);
+
+      if (pasta) {
+        const badgePasta = document.createElement('span');
+        badgePasta.className = 'badge-folder';
+        badgePasta.textContent = `📁 ${pasta.name}`;
+        meta.appendChild(badgePasta);
+      }
+
+      if (temLembrete) {
+        const badgeLembrete = document.createElement('span');
+        badgeLembrete.className = 'badge-reminder';
+        badgeLembrete.textContent = `⏰ ${formatarDataLembrete(nota.reminder_at)}`;
+        meta.appendChild(badgeLembrete);
+      }
+
+      card.appendChild(acoes);
+      card.appendChild(topo);
+      if (nota.description) card.appendChild(desc);
+      card.appendChild(meta);
+
+      card.addEventListener('click', () => abrirModalNota(nota.id));
       return card;
     }
 
@@ -1899,10 +1983,31 @@ CREATE TRIGGER notes_updated_at
     async function guardarNota() {
       const titulo = document.getElementById('nota-titulo').value.trim();
       if (!titulo) { mostrarToast('O título é obrigatório.', 'error'); return; }
+      if (titulo.length > 200) { mostrarToast('O título não pode ter mais de 200 caracteres.', 'error'); return; }
 
-      // Validar data obrigatória no modo lembrete
-      if (tipoNota === 'lembrete' && !document.getElementById('nota-lembrete').value) {
+      const descricao = document.getElementById('nota-desc').value.trim();
+      if (descricao.length > 10000) { mostrarToast('A descrição é demasiado longa.', 'error'); return; }
+
+      // Validar prioridade — só aceitar valores permitidos (whitelist)
+      const prioridades = ['alta', 'media', 'baixa'];
+      const prioridade = document.getElementById('nota-prioridade').value;
+      if (!prioridades.includes(prioridade)) { mostrarToast('Prioridade inválida.', 'error'); return; }
+
+      // Validar folder_id — deve ser UUID válido ou vazio
+      const folderIdRaw = document.getElementById('nota-pasta').value;
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const folder_id = (folderIdRaw && uuidRegex.test(folderIdRaw)) ? folderIdRaw : null;
+
+      // Validar data no modo lembrete
+      const lembreteRaw = document.getElementById('nota-lembrete').value;
+      if (tipoNota === 'lembrete' && !lembreteRaw) {
         mostrarToast('Indica a data e hora do lembrete.', 'error'); return;
+      }
+      let reminder_at = null;
+      if (lembreteRaw) {
+        const dataLembrete = new Date(lembreteRaw);
+        if (isNaN(dataLembrete.getTime())) { mostrarToast('Data de lembrete inválida.', 'error'); return; }
+        reminder_at = dataLembrete.toISOString();
       }
 
       const btn = document.getElementById('nota-guardar-btn');
@@ -1911,12 +2016,10 @@ CREATE TRIGGER notes_updated_at
 
       const dados = {
         title:       titulo,
-        description: document.getElementById('nota-desc').value.trim() || null,
-        priority:    document.getElementById('nota-prioridade').value,
-        folder_id:   document.getElementById('nota-pasta').value || null,
-        reminder_at: document.getElementById('nota-lembrete').value
-                     ? new Date(document.getElementById('nota-lembrete').value).toISOString()
-                     : null,
+        description: descricao || null,
+        priority:    prioridade,
+        folder_id:   folder_id,
+        reminder_at: reminder_at,
       };
 
       // Se editou o lembrete, resetar reminder_sent
@@ -1970,10 +2073,20 @@ CREATE TRIGGER notes_updated_at
     // =============================================
     // G. LEMBRETES
     // =============================================
+    let intervaloLembretes = null;
+
     function iniciarVerificadorLembretes() {
-      // Verificar imediatamente e depois a cada 60 segundos
+      // Parar intervalo anterior se existir (evita duplicados após re-login)
+      if (intervaloLembretes) clearInterval(intervaloLembretes);
       verificarLembretes();
-      setInterval(verificarLembretes, 60000);
+      intervaloLembretes = setInterval(verificarLembretes, 60000);
+    }
+
+    function pararVerificadorLembretes() {
+      if (intervaloLembretes) {
+        clearInterval(intervaloLembretes);
+        intervaloLembretes = null;
+      }
     }
 
     async function verificarLembretes() {
