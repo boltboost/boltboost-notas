@@ -1138,6 +1138,18 @@
         <button class="modal-close" onclick="fecharModalNota()">✕</button>
       </div>
 
+      <!-- Toggle Nota / Lembrete -->
+      <div id="tipo-toggle" style="display:flex; background:var(--surface2); border-radius:10px; padding:4px; margin-bottom:20px;">
+        <button id="btn-tipo-nota" onclick="setTipoNota('nota')"
+          style="flex:1; padding:8px; border-radius:7px; font-size:13px; font-weight:600; background:var(--surface); color:var(--text); border:none; cursor:pointer; transition:all 0.2s;">
+          📝 Nota
+        </button>
+        <button id="btn-tipo-lembrete" onclick="setTipoNota('lembrete')"
+          style="flex:1; padding:8px; border-radius:7px; font-size:13px; font-weight:600; background:transparent; color:var(--text-muted); border:none; cursor:pointer; transition:all 0.2s;">
+          ⏰ Lembrete
+        </button>
+      </div>
+
       <div class="form-group">
         <label>Título <span style="color:var(--red)">*</span></label>
         <input type="text" id="nota-titulo" placeholder="Título da nota" maxlength="200" />
@@ -1166,8 +1178,8 @@
         </div>
       </div>
 
-      <div class="form-group">
-        <label>Lembrete (data e hora)</label>
+      <div class="form-group" id="campo-lembrete">
+        <label id="label-lembrete">Lembrete (data e hora)</label>
         <input type="datetime-local" id="nota-lembrete" />
       </div>
 
@@ -1816,26 +1828,64 @@ CREATE TRIGGER notes_updated_at
         const nota = todasNotas.find(n => n.id === idOuNull);
         if (!nota) return;
         editandoNotaId = nota.id;
-        document.getElementById('modal-nota-titulo').textContent = 'Editar Nota';
         document.getElementById('nota-titulo').value = nota.title;
         document.getElementById('nota-desc').value = nota.description || '';
         document.getElementById('nota-prioridade').value = nota.priority;
         document.getElementById('nota-pasta').value = nota.folder_id || '';
         document.getElementById('nota-lembrete').value = nota.reminder_at
           ? nota.reminder_at.slice(0, 16) : '';
+        // Se tem lembrete, abre em modo lembrete
+        setTipoNota(nota.reminder_at ? 'lembrete' : 'nota');
       } else {
-        // Nova nota
-        document.getElementById('modal-nota-titulo').textContent = 'Nova Nota';
+        // Nova nota — modo depende da vista ativa
         document.getElementById('nota-titulo').value = '';
         document.getElementById('nota-desc').value = '';
         document.getElementById('nota-prioridade').value = 'media';
-        // Pré-selecionar pasta ativa
         document.getElementById('nota-pasta').value = (vistaAtiva === 'folder' && pastaAtiva) ? pastaAtiva : '';
         document.getElementById('nota-lembrete').value = '';
+        // Se está na vista de lembretes, abre em modo lembrete
+        setTipoNota(vistaAtiva === 'reminders' ? 'lembrete' : 'nota');
       }
 
       document.getElementById('modal-nota-overlay').classList.add('visible');
       setTimeout(() => document.getElementById('nota-titulo').focus(), 50);
+    }
+
+    // Tipo do modal: 'nota' ou 'lembrete'
+    let tipoNota = 'nota';
+
+    function setTipoNota(tipo) {
+      tipoNota = tipo;
+      const btnNota      = document.getElementById('btn-tipo-nota');
+      const btnLembrete  = document.getElementById('btn-tipo-lembrete');
+      const campoLembrete = document.getElementById('campo-lembrete');
+      const labelLembrete = document.getElementById('label-lembrete');
+
+      if (tipo === 'lembrete') {
+        btnLembrete.style.background = 'var(--amber)';
+        btnLembrete.style.color = '#000';
+        btnNota.style.background = 'transparent';
+        btnNota.style.color = 'var(--text-muted)';
+        // Campo de lembrete obrigatório e em destaque
+        campoLembrete.style.background = 'var(--accent-dim)';
+        campoLembrete.style.borderRadius = '10px';
+        campoLembrete.style.padding = '12px';
+        labelLembrete.textContent = 'Data e hora do lembrete *';
+        document.getElementById('nota-lembrete').required = true;
+        document.getElementById('modal-nota-titulo').textContent =
+          editandoNotaId ? 'Editar Lembrete' : 'Novo Lembrete';
+      } else {
+        btnNota.style.background = 'var(--surface)';
+        btnNota.style.color = 'var(--text)';
+        btnLembrete.style.background = 'transparent';
+        btnLembrete.style.color = 'var(--text-muted)';
+        campoLembrete.style.background = '';
+        campoLembrete.style.padding = '';
+        labelLembrete.textContent = 'Lembrete (data e hora)';
+        document.getElementById('nota-lembrete').required = false;
+        document.getElementById('modal-nota-titulo').textContent =
+          editandoNotaId ? 'Editar Nota' : 'Nova Nota';
+      }
     }
 
     function fecharModalNota() {
@@ -1849,6 +1899,11 @@ CREATE TRIGGER notes_updated_at
     async function guardarNota() {
       const titulo = document.getElementById('nota-titulo').value.trim();
       if (!titulo) { mostrarToast('O título é obrigatório.', 'error'); return; }
+
+      // Validar data obrigatória no modo lembrete
+      if (tipoNota === 'lembrete' && !document.getElementById('nota-lembrete').value) {
+        mostrarToast('Indica a data e hora do lembrete.', 'error'); return;
+      }
 
       const btn = document.getElementById('nota-guardar-btn');
       btn.disabled = true;
