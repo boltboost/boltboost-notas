@@ -1,0 +1,8 @@
+{
+  "name": "boltboost-notas",
+  "version": "1.0.0",
+  "description": "App de notas BoltBoost",
+  "scripts": {
+    "start": "npx serve . -p ${PORT:-3000} --no-clipboard"
+  }
+}

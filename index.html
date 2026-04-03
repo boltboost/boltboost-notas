@@ -1,0 +1,2012 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>⚡ BoltBoost — Notas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Karla:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
+  <style>
+    /* =============================================
+       RESET E VARIÁVEIS
+    ============================================= */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #0e0e10;
+      --surface:      #1a1a1e;
+      --surface2:     #242428;
+      --surface3:     #2e2e34;
+      --accent:       #f0a020;
+      --accent-dim:   rgba(240,160,32,0.15);
+      --text:         #f0f0f0;
+      --text-muted:   #888888;
+      --text-dim:     #555555;
+      --red:          #e05050;
+      --amber:        #f0a020;
+      --blue:         #5090e0;
+      --green:        #4caf80;
+      --border:       rgba(255,255,255,0.07);
+      --radius:       10px;
+      --sidebar-w:    260px;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Karla', sans-serif;
+      font-size: 15px;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button { font-family: inherit; cursor: pointer; border: none; outline: none; }
+    input, textarea, select { font-family: inherit; outline: none; border: none; }
+
+    /* =============================================
+       ECRÃS (alternar entre setup / auth / app)
+    ============================================= */
+    .screen { display: none; }
+    .screen.active { display: flex; }
+
+    /* =============================================
+       ECRÃ DE SETUP
+    ============================================= */
+    #screen-setup {
+      min-height: 100vh;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .setup-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px;
+      width: 100%;
+      max-width: 540px;
+    }
+
+    .setup-card .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .setup-card h2 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .setup-card p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      color: var(--text);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      border-color: var(--accent);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .sql-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      font-family: monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+      max-height: 120px;
+      overflow-y: auto;
+      white-space: pre;
+      margin-bottom: 8px;
+    }
+
+    /* =============================================
+       BOTÕES
+    ============================================= */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
+      transition: opacity 0.2s, transform 0.1s;
+      cursor: pointer;
+    }
+
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+      width: 100%;
+      margin-top: 8px;
+      padding: 12px 20px;
+    }
+
+    .btn-primary:hover:not(:disabled) { opacity: 0.9; }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      padding: 8px 14px;
+      font-size: 13px;
+    }
+
+    .btn-ghost:hover { color: var(--text); background: var(--surface2); }
+
+    .btn-danger {
+      background: transparent;
+      color: var(--red);
+      padding: 6px 12px;
+      font-size: 13px;
+    }
+
+    .btn-danger:hover { background: rgba(224,80,80,0.1); }
+
+    .btn-icon {
+      background: transparent;
+      color: var(--text-muted);
+      padding: 6px;
+      border-radius: 6px;
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .btn-icon:hover { color: var(--text); background: var(--surface2); }
+
+    .btn-copy {
+      background: var(--surface3);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      font-size: 12px;
+      border-radius: 6px;
+    }
+
+    .btn-copy:hover { color: var(--text); }
+
+    /* =============================================
+       ECRÃ DE AUTENTICAÇÃO
+    ============================================= */
+    #screen-auth {
+      min-height: 100vh;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .auth-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .auth-card .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .auth-card h2 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+
+    .auth-toggle {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .auth-toggle span {
+      color: var(--accent);
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .auth-toggle span:hover { opacity: 0.8; }
+
+    .auth-error {
+      background: rgba(224,80,80,0.1);
+      border: 1px solid rgba(224,80,80,0.3);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--red);
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .auth-error.visible { display: block; }
+
+    /* =============================================
+       ECRÃ PRINCIPAL — LAYOUT
+    ============================================= */
+    #screen-app {
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Overlay para mobile */
+    #sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 90;
+    }
+
+    #sidebar-overlay.visible { display: block; }
+
+    /* =============================================
+       SIDEBAR
+    ============================================= */
+    #sidebar {
+      width: var(--sidebar-w);
+      height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .sidebar-header {
+      padding: 24px 20px 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .sidebar-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .sidebar-nav {
+      padding: 12px 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      user-select: none;
+    }
+
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active { background: var(--accent-dim); color: var(--accent); font-weight: 600; }
+
+    .nav-item .icon { font-size: 16px; flex-shrink: 0; }
+
+    /* Pastas */
+    .sidebar-folders {
+      padding: 12px 8px;
+      flex: 1;
+    }
+
+    .folders-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 4px 10px 8px;
+    }
+
+    .folder-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      user-select: none;
+      position: relative;
+    }
+
+    .folder-item:hover { background: var(--surface2); color: var(--text); }
+    .folder-item.active { background: var(--accent-dim); color: var(--accent); font-weight: 500; }
+
+    .folder-toggle {
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: var(--text-dim);
+      flex-shrink: 0;
+      transition: transform 0.2s;
+    }
+
+    .folder-toggle.open { transform: rotate(90deg); }
+
+    .folder-name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .folder-actions {
+      display: none;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .folder-item:hover .folder-actions { display: flex; }
+
+    .folder-actions button {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      font-size: 12px;
+      padding: 2px 4px;
+      border-radius: 4px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .folder-actions button:hover { color: var(--text); background: var(--surface3); }
+
+    .folder-children {
+      padding-left: 16px;
+    }
+
+    .sidebar-footer {
+      padding: 12px 8px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    /* =============================================
+       ÁREA PRINCIPAL
+    ============================================= */
+    #main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .main-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+
+    .hamburger {
+      display: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 20px;
+      padding: 4px;
+      border-radius: 6px;
+    }
+
+    .hamburger:hover { color: var(--text); background: var(--surface2); }
+
+    .main-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      color: var(--text);
+      flex: 1;
+    }
+
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      max-width: 320px;
+    }
+
+    .search-wrap .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      font-size: 14px;
+      pointer-events: none;
+    }
+
+    #search-input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px 8px 36px;
+      color: var(--text);
+      font-size: 13px;
+      transition: border-color 0.2s;
+    }
+
+    #search-input:focus { border-color: var(--accent); }
+    #search-input::placeholder { color: var(--text-dim); }
+
+    .toolbar {
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .notes-count {
+      font-size: 12px;
+      color: var(--text-dim);
+      flex: 1;
+    }
+
+    .sort-label {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    #sort-select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 10px;
+      color: var(--text);
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    #sort-select option { background: var(--surface2); }
+
+    /* =============================================
+       GRELHA DE NOTAS
+    ============================================= */
+    #notes-grid {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+    }
+
+    .notes-inner {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    /* Estado vazio */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      min-height: 300px;
+      color: var(--text-dim);
+      text-align: center;
+      gap: 12px;
+    }
+
+    .empty-state .empty-icon { font-size: 48px; opacity: 0.4; }
+    .empty-state p { font-size: 14px; }
+    .empty-state span { font-size: 13px; color: var(--text-dim); }
+
+    /* Card de nota */
+    .note-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 16px 14px;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.15s;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .note-card:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-1px); }
+
+    /* Barra colorida de prioridade */
+    .note-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+    }
+
+    .note-card.p-alta::before  { background: var(--red); }
+    .note-card.p-media::before { background: var(--amber); }
+    .note-card.p-baixa::before { background: var(--blue); }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      flex: 1;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    .badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 20px;
+      flex-shrink: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .badge-alta  { background: rgba(224,80,80,0.15);  color: var(--red); }
+    .badge-media { background: rgba(240,160,32,0.15); color: var(--amber); }
+    .badge-baixa { background: rgba(80,144,224,0.15); color: var(--blue); }
+
+    .card-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: auto;
+    }
+
+    .card-date {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .badge-folder {
+      font-size: 11px;
+      background: var(--surface2);
+      color: var(--text-muted);
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+
+    .badge-reminder {
+      font-size: 11px;
+      color: var(--amber);
+    }
+
+    .card-actions {
+      display: none;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      gap: 4px;
+    }
+
+    .note-card:hover .card-actions { display: flex; }
+
+    .card-actions button {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .card-actions button:hover { color: var(--text); }
+    .card-actions .del-btn:hover { color: var(--red); border-color: rgba(224,80,80,0.3); }
+
+    /* =============================================
+       FAB — Botão flutuante
+    ============================================= */
+    #fab {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #000;
+      font-size: 26px;
+      font-weight: 300;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(240,160,32,0.35);
+      cursor: pointer;
+      transition: transform 0.2s, opacity 0.2s;
+      z-index: 50;
+      border: none;
+    }
+
+    #fab:hover { transform: scale(1.08); }
+    #fab.visible { display: flex; }
+
+    /* =============================================
+       MODAL
+    ============================================= */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-overlay.visible { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 28px;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .modal-title {
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      background: transparent;
+      color: var(--text-dim);
+      font-size: 20px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .modal-close:hover { color: var(--text); background: var(--surface2); }
+
+    .modal-footer {
+      display: flex;
+      gap: 10px;
+      margin-top: 24px;
+      justify-content: flex-end;
+    }
+
+    /* Modal de confirmação */
+    #modal-confirm {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 380px;
+      padding: 28px;
+    }
+
+    #modal-confirm p {
+      font-size: 15px;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    #modal-confirm .modal-footer { margin-top: 0; }
+
+    /* Modal de pasta */
+    #modal-folder {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 380px;
+      padding: 28px;
+    }
+
+    /* =============================================
+       TOAST
+    ============================================= */
+    #toast-container {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 500;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 18px;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      animation: toast-in 0.3s ease forwards;
+      max-width: 320px;
+      text-align: center;
+    }
+
+    .toast.success { border-color: rgba(76,175,128,0.4); color: var(--green); }
+    .toast.error   { border-color: rgba(224,80,80,0.4);  color: var(--red); }
+    .toast.info    { border-color: rgba(240,160,32,0.3); color: var(--amber); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* =============================================
+       LOADING SPINNER
+    ============================================= */
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(240,160,32,0.3);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* =============================================
+       BARRA DE NAVEGAÇÃO INFERIOR (mobile)
+    ============================================= */
+    #bottom-nav {
+      display: none;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 64px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      z-index: 80;
+      padding: 0 8px;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .bottom-nav-inner {
+      display: flex;
+      align-items: stretch;
+      height: 100%;
+    }
+
+    .bottom-nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      cursor: pointer;
+      border-radius: 10px;
+      padding: 6px 4px;
+      color: var(--text-dim);
+      transition: color 0.15s, background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .bottom-nav-item:active { background: var(--surface2); }
+    .bottom-nav-item.active { color: var(--accent); }
+
+    .bottom-nav-item .bn-icon { font-size: 20px; line-height: 1; }
+    .bottom-nav-item .bn-label { font-size: 10px; font-weight: 600; letter-spacing: 0.02em; }
+
+    /* Botão Nova Nota na bottom nav */
+    .bottom-nav-item.bn-new {
+      color: #000;
+      background: var(--accent);
+      border-radius: 14px;
+      margin: 8px 4px;
+      flex: 1.2;
+      box-shadow: 0 2px 12px rgba(240,160,32,0.4);
+    }
+
+    .bottom-nav-item.bn-new:active { opacity: 0.85; background: var(--accent); }
+
+    /* =============================================
+       RESPONSIVO — MOBILE
+    ============================================= */
+    @media (max-width: 768px) {
+      /* Sidebar desliza da esquerda */
+      #sidebar {
+        position: fixed;
+        left: -100%;
+        top: 0;
+        z-index: 100;
+        width: 85%;
+        max-width: 300px;
+        transition: left 0.28s cubic-bezier(0.4,0,0.2,1);
+        height: 100vh;
+      }
+
+      #sidebar.open { left: 0; }
+
+      /* Esconder hamburger do topo (usamos bottom nav) */
+      .hamburger { display: none; }
+
+      /* Mostrar bottom nav */
+      #bottom-nav { display: flex; }
+
+      /* Esconder FAB no mobile (botão está na bottom nav) */
+      #fab { display: none !important; }
+
+      /* Header simplificado */
+      .main-header {
+        padding: 12px 16px;
+        gap: 10px;
+      }
+
+      .main-title { font-size: 17px; }
+
+      /* Pesquisa ocupa toda a largura */
+      .search-wrap { max-width: none; }
+
+      /* Toolbar compacta */
+      .toolbar { padding: 8px 16px; }
+      .sort-label { display: none; }
+
+      /* Grelha de notas — 1 coluna, espaço para bottom nav */
+      #notes-grid {
+        padding: 12px 12px 80px;
+      }
+
+      .notes-inner { grid-template-columns: 1fr; gap: 10px; }
+
+      /* Cards — botões sempre visíveis no mobile (não há hover) */
+      .card-actions { display: flex; }
+
+      /* Itens da sidebar maiores para toque */
+      .nav-item { padding: 12px 10px; font-size: 15px; }
+      .folder-item { padding: 10px 8px; font-size: 14px; }
+
+      /* Modais sobem do fundo no mobile */
+      .modal-overlay {
+        align-items: flex-end;
+        padding: 0;
+      }
+
+      .modal {
+        border-radius: 20px 20px 0 0;
+        max-height: 92vh;
+        padding: 20px 20px 32px;
+      }
+
+      #modal-confirm, #modal-folder {
+        border-radius: 20px 20px 0 0;
+        max-height: 92vh;
+        padding: 24px 20px 32px;
+        width: 100%;
+        max-width: 100%;
+      }
+
+      /* Toast acima da bottom nav */
+      #toast-container { bottom: 80px; }
+
+      /* Setup e auth — padding reduzido */
+      .setup-card { padding: 28px 20px; }
+      .auth-card  { padding: 28px 20px; border-radius: 20px 20px 0 0; align-self: flex-end; width: 100%; max-width: 100%; }
+      #screen-auth { align-items: flex-end; }
+    }
+
+    @media (max-width: 380px) {
+      .bottom-nav-item .bn-label { font-size: 9px; }
+    }
+
+    /* Scrollbar customizada */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+  </style>
+</head>
+<body>
+
+  <!-- =============================================
+       ECRÃ 1: SETUP
+  ============================================= -->
+  <div id="screen-setup" class="screen">
+    <div class="setup-card">
+      <div class="logo"><img src="logo.png" alt="BoltBoost" style="height:36px; vertical-align:middle;" /></div>
+      <h2>Configuração inicial</h2>
+      <p>Introduz as tuas credenciais do Supabase para começar. Encontras-as em Project Settings → API.</p>
+
+      <div class="form-group">
+        <label>Supabase URL</label>
+        <input type="text" id="setup-url" placeholder="https://xxxx.supabase.co" autocomplete="off" />
+      </div>
+
+      <div class="form-group">
+        <label>Supabase Anon Key</label>
+        <input type="text" id="setup-key" placeholder="eyJhbGc..." autocomplete="off" />
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+          <span style="font-size:12px; color:var(--text-muted); font-weight:600;">SQL Schema (corre no Supabase SQL Editor)</span>
+          <button class="btn-copy" onclick="copiarSQL()">Copiar SQL</button>
+        </div>
+        <div class="sql-box" id="sql-preview"></div>
+      </div>
+
+      <button class="btn btn-primary" onclick="guardarSetup()">Guardar e Continuar →</button>
+    </div>
+  </div>
+
+  <!-- =============================================
+       ECRÃ 2: AUTENTICAÇÃO
+  ============================================= -->
+  <div id="screen-auth" class="screen">
+    <div class="auth-card">
+      <div class="logo"><img src="logo.png" alt="BoltBoost" style="height:36px; vertical-align:middle;" /></div>
+      <h2 id="auth-title">Entrar na conta</h2>
+
+      <div class="auth-error" id="auth-error"></div>
+
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="auth-email" placeholder="o.teu@email.com" autocomplete="email" />
+      </div>
+
+      <div class="form-group">
+        <label>Palavra-passe</label>
+        <input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+
+      <button class="btn btn-primary" id="auth-btn" onclick="autenticar()">Entrar</button>
+
+      <div class="auth-toggle">
+        <span id="auth-toggle-text">Não tens conta? <span onclick="toggleAuthMode()">Criar conta</span></span>
+      </div>
+
+      <div style="margin-top:16px; text-align:center;">
+        <button class="btn-ghost" style="font-size:12px;" onclick="mostrarSetup()">← Alterar credenciais Supabase</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================================
+       ECRÃ 3: APLICAÇÃO PRINCIPAL
+  ============================================= -->
+  <div id="screen-app" class="screen">
+
+    <!-- Overlay mobile -->
+    <div id="sidebar-overlay" onclick="fecharSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">⚡ BoltBoost</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-item active" id="nav-all" onclick="navegarPara('all')">
+          <span class="icon">📄</span>
+          <span>Todas as Notas</span>
+        </div>
+        <div class="nav-item" id="nav-reminders" onclick="navegarPara('reminders')">
+          <span class="icon">⏰</span>
+          <span>Lembretes</span>
+        </div>
+      </nav>
+
+      <div class="sidebar-folders">
+        <div class="folders-title">Pastas</div>
+        <div id="folder-tree"></div>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="nav-item" onclick="abrirModalPasta(null)">
+          <span class="icon">＋</span>
+          <span>Nova Pasta</span>
+        </div>
+        <div class="nav-item" onclick="logout()">
+          <span class="icon">↩</span>
+          <span>Sair</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Área principal -->
+    <main id="main">
+      <div class="main-header">
+        <button class="hamburger" onclick="abrirSidebar()">☰</button>
+        <h1 class="main-title" id="main-title">Todas as Notas</h1>
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="search-input" placeholder="Pesquisar notas..." oninput="pesquisar()" />
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <span class="notes-count" id="notes-count">0 notas</span>
+        <span class="sort-label">Ordenar por:</span>
+        <select id="sort-select" onchange="ordenar()">
+          <option value="data">Data (mais recente)</option>
+          <option value="prioridade">Prioridade</option>
+          <option value="titulo">Título A-Z</option>
+        </select>
+      </div>
+
+      <div id="notes-grid">
+        <div class="notes-inner" id="notes-inner"></div>
+      </div>
+    </main>
+
+    <!-- FAB -->
+    <button id="fab" class="visible" onclick="abrirModalNota(null)" title="Nova nota">＋</button>
+  </div>
+
+  <!-- =============================================
+       MODAL: NOTA (criar/editar)
+  ============================================= -->
+  <div class="modal-overlay" id="modal-nota-overlay" onclick="fecharModalNotaOverlay(event)">
+    <div class="modal" id="modal-nota">
+      <div class="modal-header">
+        <span class="modal-title" id="modal-nota-titulo">Nova Nota</span>
+        <button class="modal-close" onclick="fecharModalNota()">✕</button>
+      </div>
+
+      <div class="form-group">
+        <label>Título <span style="color:var(--red)">*</span></label>
+        <input type="text" id="nota-titulo" placeholder="Título da nota" maxlength="200" />
+      </div>
+
+      <div class="form-group">
+        <label>Descrição</label>
+        <textarea id="nota-desc" placeholder="Notas, detalhes, observações..." rows="4"></textarea>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div class="form-group">
+          <label>Prioridade</label>
+          <select id="nota-prioridade">
+            <option value="media">🟡 Média</option>
+            <option value="alta">🔴 Alta</option>
+            <option value="baixa">🔵 Baixa</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Pasta</label>
+          <select id="nota-pasta">
+            <option value="">Sem pasta</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Lembrete (data e hora)</label>
+        <input type="datetime-local" id="nota-lembrete" />
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="fecharModalNota()">Cancelar</button>
+        <button class="btn btn-primary" id="nota-guardar-btn" onclick="guardarNota()" style="width:auto; margin-top:0;">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================================
+       MODAL: CONFIRMAÇÃO
+  ============================================= -->
+  <div class="modal-overlay" id="modal-confirm-overlay">
+    <div id="modal-confirm">
+      <div class="modal-header">
+        <span class="modal-title">Confirmar ação</span>
+        <button class="modal-close" onclick="fecharConfirm(false)">✕</button>
+      </div>
+      <p id="modal-confirm-msg"></p>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="fecharConfirm(false)">Cancelar</button>
+        <button class="btn btn-danger" onclick="fecharConfirm(true)">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================================
+       MODAL: PASTA (criar/renomear)
+  ============================================= -->
+  <div class="modal-overlay" id="modal-pasta-overlay" onclick="fecharModalPastaOverlay(event)">
+    <div id="modal-folder">
+      <div class="modal-header">
+        <span class="modal-title" id="modal-pasta-titulo">Nova Pasta</span>
+        <button class="modal-close" onclick="fecharModalPasta()">✕</button>
+      </div>
+      <div class="form-group">
+        <label>Nome da pasta</label>
+        <input type="text" id="pasta-nome" placeholder="Ex: ClienteA, Ideias..." maxlength="100"
+               onkeydown="if(event.key==='Enter') guardarPasta()" />
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="fecharModalPasta()">Cancelar</button>
+        <button class="btn btn-primary" onclick="guardarPasta()" style="width:auto; margin-top:0;">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barra de navegação inferior (mobile) -->
+  <nav id="bottom-nav">
+    <div class="bottom-nav-inner">
+      <div class="bottom-nav-item active" id="bn-all" onclick="navegarPara('all')">
+        <span class="bn-icon">📄</span>
+        <span class="bn-label">Notas</span>
+      </div>
+      <div class="bottom-nav-item" id="bn-reminders" onclick="navegarPara('reminders')">
+        <span class="bn-icon">⏰</span>
+        <span class="bn-label">Lembretes</span>
+      </div>
+      <div class="bottom-nav-item bn-new" onclick="abrirModalNota(null)">
+        <span class="bn-icon">＋</span>
+        <span class="bn-label">Nova Nota</span>
+      </div>
+      <div class="bottom-nav-item" id="bn-folders" onclick="abrirSidebar()">
+        <span class="bn-icon">📁</span>
+        <span class="bn-label">Pastas</span>
+      </div>
+      <div class="bottom-nav-item" id="bn-menu" onclick="abrirSidebar()">
+        <span class="bn-icon">☰</span>
+        <span class="bn-label">Menu</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Toast container -->
+  <div id="toast-container"></div>
+
+  <!-- =============================================
+       JAVASCRIPT
+  ============================================= -->
+  <script>
+    'use strict';
+
+    // =============================================
+    // ESTADO GLOBAL
+    // =============================================
+    let client = null;           // cliente Supabase
+    let todasNotas = [];         // notas carregadas
+    let todasPastas = [];        // pastas carregadas
+    let pastaAtiva = null;       // id da pasta selecionada (null = todas)
+    let vistaAtiva = 'all';      // 'all' | 'reminders'
+    let editandoNotaId = null;   // id da nota em edição
+    let editandoPastaId = null;  // id da pasta em edição
+    let pastaPaiModal = null;    // pasta pai ao criar sub-pasta
+    let confirmCallback = null;  // callback do modal de confirmação
+    let pastasExpandidas = new Set(); // ids das pastas abertas
+
+    // SQL Schema para mostrar no ecrã de setup
+    const SQL_SCHEMA = `-- BOLTBOOST NOTAS — Schema SQL v1.0.0
+-- Corre no Supabase SQL Editor
+
+CREATE TABLE IF NOT EXISTS folders (
+  id         UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id    UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  name       TEXT NOT NULL,
+  parent_id  UUID REFERENCES folders(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS notes (
+  id            UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id       UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  folder_id     UUID REFERENCES folders(id) ON DELETE SET NULL,
+  title         TEXT NOT NULL,
+  description   TEXT,
+  priority      TEXT DEFAULT 'media' CHECK (priority IN ('alta','media','baixa')),
+  reminder_at   TIMESTAMPTZ,
+  reminder_sent BOOLEAN DEFAULT FALSE,
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE folders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notes   ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "user_folders" ON folders FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "user_notes"   ON notes   FOR ALL USING (auth.uid() = user_id);
+
+CREATE OR REPLACE FUNCTION update_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN NEW.updated_at = NOW(); RETURN NEW; END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER notes_updated_at
+  BEFORE UPDATE ON notes
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();`;
+
+    // =============================================
+    // A. INICIALIZAÇÃO
+    // =============================================
+    document.addEventListener('DOMContentLoaded', () => {
+      // Preencher pré-visualização do SQL no ecrã de setup
+      document.getElementById('sql-preview').textContent = SQL_SCHEMA;
+
+      const url = localStorage.getItem('sb_url');
+      const key = localStorage.getItem('sb_key');
+
+      if (!url || !key) {
+        mostrarEcra('setup');
+        return;
+      }
+
+      inicializarSupabase(url, key);
+    });
+
+    function inicializarSupabase(url, key) {
+      try {
+        client = supabase.createClient(url, key);
+        // Reagir a mudanças de sessão (login/logout)
+        client.auth.onAuthStateChange((_event, session) => {
+          if (session) {
+            mostrarEcra('app');
+            carregarApp(session.user);
+          } else {
+            mostrarEcra('auth');
+          }
+        });
+      } catch (e) {
+        mostrarToast('Erro ao inicializar o Supabase. Verifica as credenciais.', 'error');
+        mostrarEcra('setup');
+      }
+    }
+
+    function mostrarEcra(nome) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      const mapa = { setup: 'screen-setup', auth: 'screen-auth', app: 'screen-app' };
+      document.getElementById(mapa[nome]).classList.add('active');
+    }
+
+    // =============================================
+    // B. SETUP
+    // =============================================
+    function guardarSetup() {
+      const url = document.getElementById('setup-url').value.trim();
+      const key = document.getElementById('setup-key').value.trim();
+
+      if (!url || !key) {
+        mostrarToast('Preenche a URL e a Anon Key do Supabase.', 'error');
+        return;
+      }
+
+      if (!url.startsWith('https://')) {
+        mostrarToast('A URL deve começar com https://', 'error');
+        return;
+      }
+
+      localStorage.setItem('sb_url', url);
+      localStorage.setItem('sb_key', key);
+      inicializarSupabase(url, key);
+    }
+
+    function mostrarSetup() {
+      mostrarEcra('setup');
+    }
+
+    function copiarSQL() {
+      navigator.clipboard.writeText(SQL_SCHEMA)
+        .then(() => mostrarToast('SQL copiado para a área de transferência!', 'success'))
+        .catch(() => mostrarToast('Não foi possível copiar. Copia manualmente.', 'error'));
+    }
+
+    // =============================================
+    // C. AUTENTICAÇÃO
+    // =============================================
+    let modoAuth = 'login'; // 'login' | 'registo'
+
+    function toggleAuthMode() {
+      modoAuth = modoAuth === 'login' ? 'registo' : 'login';
+      const isRegisto = modoAuth === 'registo';
+
+      document.getElementById('auth-title').textContent = isRegisto ? 'Criar conta' : 'Entrar na conta';
+      document.getElementById('auth-btn').textContent = isRegisto ? 'Criar conta' : 'Entrar';
+      document.getElementById('auth-toggle-text').innerHTML = isRegisto
+        ? 'Já tens conta? <span onclick="toggleAuthMode()">Entrar</span>'
+        : 'Não tens conta? <span onclick="toggleAuthMode()">Criar conta</span>';
+
+      esconderErroAuth();
+    }
+
+    async function autenticar() {
+      const email = document.getElementById('auth-email').value.trim();
+      const password = document.getElementById('auth-password').value;
+      const btn = document.getElementById('auth-btn');
+
+      if (!email || !password) {
+        mostrarErroAuth('Preenche o email e a palavra-passe.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>';
+      esconderErroAuth();
+
+      let resultado;
+      if (modoAuth === 'login') {
+        resultado = await client.auth.signInWithPassword({ email, password });
+      } else {
+        resultado = await client.auth.signUp({ email, password });
+      }
+
+      btn.disabled = false;
+      btn.textContent = modoAuth === 'login' ? 'Entrar' : 'Criar conta';
+
+      if (resultado.error) {
+        mostrarErroAuth(traduzirErroAuth(resultado.error.message));
+      } else if (modoAuth === 'registo' && !resultado.data?.session) {
+        mostrarErroAuth('Conta criada! Verifica o teu email para confirmar.', true);
+      }
+    }
+
+    function traduzirErroAuth(msg) {
+      if (msg.includes('Invalid login credentials')) return 'Email ou palavra-passe incorretos.';
+      if (msg.includes('Email not confirmed')) return 'Confirma o teu email antes de entrar.';
+      if (msg.includes('User already registered')) return 'Este email já tem conta. Faz login.';
+      if (msg.includes('Password should be')) return 'A palavra-passe deve ter pelo menos 6 caracteres.';
+      if (msg.includes('Unable to validate')) return 'Credenciais inválidas. Verifica e tenta novamente.';
+      return msg;
+    }
+
+    function mostrarErroAuth(msg, info = false) {
+      const el = document.getElementById('auth-error');
+      el.textContent = msg;
+      el.classList.add('visible');
+      if (info) el.style.color = 'var(--amber)';
+      else el.style.color = '';
+    }
+
+    function esconderErroAuth() {
+      document.getElementById('auth-error').classList.remove('visible');
+    }
+
+    async function logout() {
+      await client.auth.signOut();
+      todasNotas = [];
+      todasPastas = [];
+      mostrarToast('Sessão terminada.', 'info');
+    }
+
+    // =============================================
+    // ARRANQUE DA APP após login
+    // =============================================
+    async function carregarApp(user) {
+      // Pedir permissão para notificações
+      if (Notification && Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+
+      await criarPastasIniciais();
+      await carregarPastas();
+      await carregarNotas();
+      renderizarNota();
+      iniciarVerificadorLembretes();
+    }
+
+    // =============================================
+    // D. PASTAS
+    // =============================================
+    async function criarPastasIniciais() {
+      // Criar "Clientes" e "Pessoal" se ainda não existirem
+      const { data } = await client.from('folders').select('name').is('parent_id', null);
+      const nomes = (data || []).map(f => f.name);
+
+      const criacoes = [];
+      if (!nomes.includes('Clientes')) criacoes.push(criarPasta('Clientes', null, false));
+      if (!nomes.includes('Pessoal'))  criacoes.push(criarPasta('Pessoal',  null, false));
+      if (criacoes.length > 0) await Promise.all(criacoes);
+    }
+
+    async function carregarPastas() {
+      const { data, error } = await client.from('folders').select('*').order('name');
+      if (error) { mostrarToast('Erro ao carregar pastas.', 'error'); return; }
+      todasPastas = data || [];
+      renderizarArvore();
+      preencherSelectPastas();
+    }
+
+    function renderizarArvore() {
+      const container = document.getElementById('folder-tree');
+      const raizes = todasPastas.filter(f => !f.parent_id);
+      container.innerHTML = '';
+      raizes.forEach(pasta => container.appendChild(criarElementoPasta(pasta, 0)));
+    }
+
+    function criarElementoPasta(pasta, nivel) {
+      const filhos = todasPastas.filter(f => f.parent_id === pasta.id);
+      const temFilhos = filhos.length > 0;
+      const expandida = pastasExpandidas.has(pasta.id);
+
+      const wrapper = document.createElement('div');
+
+      const item = document.createElement('div');
+      item.className = 'folder-item' + (pastaAtiva === pasta.id ? ' active' : '');
+      item.style.paddingLeft = `${8 + nivel * 16}px`;
+      item.dataset.id = pasta.id;
+
+      // Ícone expand
+      const toggle = document.createElement('span');
+      toggle.className = 'folder-toggle' + (expandida ? ' open' : '');
+      toggle.textContent = temFilhos ? '▶' : '';
+      toggle.style.visibility = temFilhos ? 'visible' : 'hidden';
+      toggle.onclick = (e) => { e.stopPropagation(); togglePasta(pasta.id); };
+
+      const nome = document.createElement('span');
+      nome.className = 'folder-name';
+      nome.textContent = `📁 ${pasta.name}`;
+
+      const acoes = document.createElement('div');
+      acoes.className = 'folder-actions';
+
+      const btnSub = document.createElement('button');
+      btnSub.title = 'Nova sub-pasta';
+      btnSub.textContent = '＋';
+      btnSub.onclick = (e) => { e.stopPropagation(); abrirModalPasta(pasta.id); };
+
+      const btnRen = document.createElement('button');
+      btnRen.title = 'Renomear';
+      btnRen.textContent = '✎';
+      btnRen.onclick = (e) => { e.stopPropagation(); abrirModalRenamePasta(pasta.id, pasta.name); };
+
+      const btnDel = document.createElement('button');
+      btnDel.title = 'Eliminar';
+      btnDel.textContent = '✕';
+      btnDel.style.color = 'var(--red)';
+      btnDel.onclick = (e) => { e.stopPropagation(); confirmarEliminarPasta(pasta.id, pasta.name); };
+
+      acoes.appendChild(btnSub);
+      acoes.appendChild(btnRen);
+      acoes.appendChild(btnDel);
+
+      item.appendChild(toggle);
+      item.appendChild(nome);
+      item.appendChild(acoes);
+      item.onclick = () => navegarParaPasta(pasta.id, pasta.name);
+
+      wrapper.appendChild(item);
+
+      // Filhos
+      if (temFilhos && expandida) {
+        const children = document.createElement('div');
+        children.className = 'folder-children';
+        filhos.forEach(filho => children.appendChild(criarElementoPasta(filho, nivel + 1)));
+        wrapper.appendChild(children);
+      }
+
+      return wrapper;
+    }
+
+    function togglePasta(id) {
+      if (pastasExpandidas.has(id)) pastasExpandidas.delete(id);
+      else pastasExpandidas.add(id);
+      renderizarArvore();
+    }
+
+    function preencherSelectPastas() {
+      const select = document.getElementById('nota-pasta');
+      select.innerHTML = '<option value="">Sem pasta</option>';
+
+      // Ordem: raízes primeiro, depois filhos recuados
+      function adicionarOpcoes(parentId, nivel) {
+        const lista = todasPastas.filter(f => f.parent_id === parentId || (!parentId && !f.parent_id));
+        lista.forEach(pasta => {
+          const opt = document.createElement('option');
+          opt.value = pasta.id;
+          opt.textContent = '  '.repeat(nivel) + pasta.name;
+          select.appendChild(opt);
+          adicionarOpcoes(pasta.id, nivel + 1);
+        });
+      }
+
+      adicionarOpcoes(null, 0);
+    }
+
+    // Criar pasta (interno)
+    async function criarPasta(nome, parentId, toast = true) {
+      const { data: { user } } = await client.auth.getUser();
+      const { error } = await client.from('folders').insert({ name: nome, parent_id: parentId || null, user_id: user.id });
+      if (error) {
+        if (toast) mostrarToast('Erro ao criar pasta.', 'error');
+        return false;
+      }
+      return true;
+    }
+
+    // Modal pasta — abrir para criar
+    function abrirModalPasta(parentId) {
+      pastaPaiModal = parentId;
+      editandoPastaId = null;
+      document.getElementById('modal-pasta-titulo').textContent = parentId ? 'Nova Sub-pasta' : 'Nova Pasta';
+      document.getElementById('pasta-nome').value = '';
+      document.getElementById('modal-pasta-overlay').classList.add('visible');
+      setTimeout(() => document.getElementById('pasta-nome').focus(), 50);
+    }
+
+    // Modal pasta — abrir para renomear
+    function abrirModalRenamePasta(id, nomeAtual) {
+      editandoPastaId = id;
+      pastaPaiModal = null;
+      document.getElementById('modal-pasta-titulo').textContent = 'Renomear Pasta';
+      document.getElementById('pasta-nome').value = nomeAtual;
+      document.getElementById('modal-pasta-overlay').classList.add('visible');
+      setTimeout(() => document.getElementById('pasta-nome').focus(), 50);
+    }
+
+    function fecharModalPasta() {
+      document.getElementById('modal-pasta-overlay').classList.remove('visible');
+    }
+
+    function fecharModalPastaOverlay(e) {
+      if (e.target === document.getElementById('modal-pasta-overlay')) fecharModalPasta();
+    }
+
+    async function guardarPasta() {
+      const nome = document.getElementById('pasta-nome').value.trim();
+      if (!nome) { mostrarToast('Indica o nome da pasta.', 'error'); return; }
+
+      if (editandoPastaId) {
+        // Renomear
+        const { error } = await client.from('folders').update({ name: nome }).eq('id', editandoPastaId);
+        if (error) { mostrarToast('Erro ao renomear pasta.', 'error'); return; }
+        mostrarToast('Pasta renomeada.', 'success');
+      } else {
+        // Criar
+        const ok = await criarPasta(nome, pastaPaiModal);
+        if (!ok) return;
+        if (pastaPaiModal) pastasExpandidas.add(pastaPaiModal); // auto-expandir pai
+        mostrarToast('Pasta criada!', 'success');
+      }
+
+      fecharModalPasta();
+      await carregarPastas();
+    }
+
+    function confirmarEliminarPasta(id, nome) {
+      mostrarConfirm(`Eliminar a pasta "${nome}"? As notas dentro dela perdem a associação à pasta.`, async () => {
+        const { error } = await client.from('folders').delete().eq('id', id);
+        if (error) { mostrarToast('Erro ao eliminar pasta.', 'error'); return; }
+        mostrarToast('Pasta eliminada.', 'success');
+
+        // Se era a pasta ativa, voltar para "todas"
+        if (pastaAtiva === id) navegarPara('all');
+        else await carregarPastas();
+      });
+    }
+
+    // Navegar para pasta
+    async function navegarParaPasta(id, nome) {
+      pastaAtiva = id;
+      vistaAtiva = 'folder';
+      document.getElementById('main-title').textContent = `📁 ${nome}`;
+      atualizarNavAtivo(null);
+      document.querySelectorAll('.folder-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.id === id);
+      });
+      fecharSidebar();
+      await carregarNotas();
+      renderizarNota();
+    }
+
+    // Navegar para vista (all / reminders)
+    async function navegarPara(vista) {
+      vistaAtiva = vista;
+      pastaAtiva = null;
+      atualizarNavAtivo(vista);
+      document.querySelectorAll('.folder-item').forEach(el => el.classList.remove('active'));
+      document.getElementById('main-title').textContent = vista === 'reminders' ? '⏰ Lembretes' : 'Todas as Notas';
+      fecharSidebar();
+      await carregarNotas();
+      renderizarNota();
+    }
+
+    function atualizarNavAtivo(vista) {
+      document.getElementById('nav-all').classList.toggle('active', vista === 'all');
+      document.getElementById('nav-reminders').classList.toggle('active', vista === 'reminders');
+      // Atualizar bottom nav mobile
+      document.getElementById('bn-all').classList.toggle('active', vista === 'all');
+      document.getElementById('bn-reminders').classList.toggle('active', vista === 'reminders');
+      document.getElementById('bn-folders').classList.toggle('active', vista === 'folder');
+    }
+
+    // =============================================
+    // E. NOTAS — CRUD
+    // =============================================
+    async function carregarNotas() {
+      let query = client.from('notes').select('*');
+
+      if (vistaAtiva === 'folder' && pastaAtiva) {
+        query = query.eq('folder_id', pastaAtiva);
+      } else if (vistaAtiva === 'reminders') {
+        const agora = new Date().toISOString();
+        query = query.eq('reminder_sent', false).not('reminder_at', 'is', null).gte('reminder_at', agora);
+      }
+
+      query = query.order('created_at', { ascending: false });
+
+      const { data, error } = await query;
+      if (error) { mostrarToast('Erro ao carregar notas.', 'error'); return; }
+      todasNotas = data || [];
+    }
+
+    function renderizarNota() {
+      const termoPesquisa = document.getElementById('search-input').value.toLowerCase();
+      const ordenacao = document.getElementById('sort-select').value;
+
+      let notas = [...todasNotas];
+
+      // Filtrar por pesquisa
+      if (termoPesquisa) {
+        notas = notas.filter(n =>
+          n.title.toLowerCase().includes(termoPesquisa) ||
+          (n.description || '').toLowerCase().includes(termoPesquisa)
+        );
+      }
+
+      // Ordenar
+      if (ordenacao === 'prioridade') {
+        const ordem = { alta: 0, media: 1, baixa: 2 };
+        notas.sort((a, b) => (ordem[a.priority] ?? 1) - (ordem[b.priority] ?? 1));
+      } else if (ordenacao === 'titulo') {
+        notas.sort((a, b) => a.title.localeCompare(b.title));
+      } else {
+        notas.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      }
+
+      const container = document.getElementById('notes-inner');
+      container.innerHTML = '';
+
+      // Atualizar contador
+      const count = notas.length;
+      document.getElementById('notes-count').textContent =
+        count === 0 ? 'Sem notas' :
+        count === 1 ? '1 nota' : `${count} notas`;
+
+      if (notas.length === 0) {
+        const vazioMsg = vistaAtiva === 'reminders'
+          ? 'Sem lembretes ativos'
+          : (document.getElementById('search-input').value ? 'Sem resultados' : 'Sem notas aqui');
+
+        container.innerHTML = `
+          <div class="empty-state" style="grid-column:1/-1;">
+            <div class="empty-icon">${vistaAtiva === 'reminders' ? '⏰' : '📝'}</div>
+            <p>${vazioMsg}</p>
+            <span>${vistaAtiva !== 'reminders' ? 'Clica no ＋ para criar a primeira nota' : ''}</span>
+          </div>`;
+        return;
+      }
+
+      notas.forEach(nota => container.appendChild(criarCardNota(nota)));
+    }
+
+    function criarCardNota(nota) {
+      const card = document.createElement('div');
+      card.className = `note-card p-${nota.priority}`;
+
+      // Encontrar nome da pasta
+      const pasta = todasPastas.find(f => f.id === nota.folder_id);
+
+      // Formatar data
+      const data = new Date(nota.created_at);
+      const dataStr = data.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' });
+
+      // Tem lembrete futuro ativo?
+      const temLembrete = nota.reminder_at && !nota.reminder_sent && new Date(nota.reminder_at) > new Date();
+
+      card.innerHTML = `
+        <div class="card-actions">
+          <button onclick="event.stopPropagation(); abrirModalNota('${nota.id}')">✎</button>
+          <button class="del-btn" onclick="event.stopPropagation(); confirmarEliminarNota('${nota.id}', \`${nota.title.replace(/`/g, "'")}\`)">✕</button>
+        </div>
+        <div class="card-top">
+          <span class="card-title">${escapeHtml(nota.title)}</span>
+          <span class="badge badge-${nota.priority}">${nota.priority}</span>
+        </div>
+        ${nota.description ? `<p class="card-desc">${escapeHtml(nota.description)}</p>` : ''}
+        <div class="card-meta">
+          <span class="card-date">${dataStr}</span>
+          ${pasta ? `<span class="badge-folder">📁 ${escapeHtml(pasta.name)}</span>` : ''}
+          ${temLembrete ? `<span class="badge-reminder">⏰ ${formatarDataLembrete(nota.reminder_at)}</span>` : ''}
+        </div>`;
+
+      card.onclick = () => abrirModalNota(nota.id);
+      return card;
+    }
+
+    function formatarDataLembrete(dt) {
+      const d = new Date(dt);
+      return d.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' }) +
+        ' ' + d.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // Modal nota — abrir
+    function abrirModalNota(idOuNull) {
+      editandoNotaId = null;
+
+      if (idOuNull && typeof idOuNull === 'string' && idOuNull.length > 10) {
+        // Editar nota existente
+        const nota = todasNotas.find(n => n.id === idOuNull);
+        if (!nota) return;
+        editandoNotaId = nota.id;
+        document.getElementById('modal-nota-titulo').textContent = 'Editar Nota';
+        document.getElementById('nota-titulo').value = nota.title;
+        document.getElementById('nota-desc').value = nota.description || '';
+        document.getElementById('nota-prioridade').value = nota.priority;
+        document.getElementById('nota-pasta').value = nota.folder_id || '';
+        document.getElementById('nota-lembrete').value = nota.reminder_at
+          ? nota.reminder_at.slice(0, 16) : '';
+      } else {
+        // Nova nota
+        document.getElementById('modal-nota-titulo').textContent = 'Nova Nota';
+        document.getElementById('nota-titulo').value = '';
+        document.getElementById('nota-desc').value = '';
+        document.getElementById('nota-prioridade').value = 'media';
+        // Pré-selecionar pasta ativa
+        document.getElementById('nota-pasta').value = (vistaAtiva === 'folder' && pastaAtiva) ? pastaAtiva : '';
+        document.getElementById('nota-lembrete').value = '';
+      }
+
+      document.getElementById('modal-nota-overlay').classList.add('visible');
+      setTimeout(() => document.getElementById('nota-titulo').focus(), 50);
+    }
+
+    function fecharModalNota() {
+      document.getElementById('modal-nota-overlay').classList.remove('visible');
+    }
+
+    function fecharModalNotaOverlay(e) {
+      if (e.target === document.getElementById('modal-nota-overlay')) fecharModalNota();
+    }
+
+    async function guardarNota() {
+      const titulo = document.getElementById('nota-titulo').value.trim();
+      if (!titulo) { mostrarToast('O título é obrigatório.', 'error'); return; }
+
+      const btn = document.getElementById('nota-guardar-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>';
+
+      const dados = {
+        title:       titulo,
+        description: document.getElementById('nota-desc').value.trim() || null,
+        priority:    document.getElementById('nota-prioridade').value,
+        folder_id:   document.getElementById('nota-pasta').value || null,
+        reminder_at: document.getElementById('nota-lembrete').value
+                     ? new Date(document.getElementById('nota-lembrete').value).toISOString()
+                     : null,
+      };
+
+      // Se editou o lembrete, resetar reminder_sent
+      if (editandoNotaId) {
+        const notaAnterior = todasNotas.find(n => n.id === editandoNotaId);
+        if (notaAnterior && dados.reminder_at !== notaAnterior.reminder_at) {
+          dados.reminder_sent = false;
+        }
+      }
+
+      let error;
+      if (editandoNotaId) {
+        ({ error } = await client.from('notes').update(dados).eq('id', editandoNotaId));
+      } else {
+        const { data: { user } } = await client.auth.getUser();
+        ({ error } = await client.from('notes').insert({ ...dados, user_id: user.id }));
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Guardar';
+
+      if (error) { mostrarToast('Erro ao guardar nota.', 'error'); return; }
+
+      mostrarToast(editandoNotaId ? 'Nota atualizada!' : 'Nota criada!', 'success');
+      fecharModalNota();
+      await carregarNotas();
+      renderizarNota();
+    }
+
+    function confirmarEliminarNota(id, titulo) {
+      mostrarConfirm(`Eliminar a nota "${titulo}"? Esta ação não pode ser desfeita.`, async () => {
+        const { error } = await client.from('notes').delete().eq('id', id);
+        if (error) { mostrarToast('Erro ao eliminar nota.', 'error'); return; }
+        mostrarToast('Nota eliminada.', 'success');
+        await carregarNotas();
+        renderizarNota();
+      });
+    }
+
+    // =============================================
+    // F. PESQUISA E ORDENAÇÃO
+    // =============================================
+    function pesquisar() {
+      renderizarNota();
+    }
+
+    function ordenar() {
+      renderizarNota();
+    }
+
+    // =============================================
+    // G. LEMBRETES
+    // =============================================
+    function iniciarVerificadorLembretes() {
+      // Verificar imediatamente e depois a cada 60 segundos
+      verificarLembretes();
+      setInterval(verificarLembretes, 60000);
+    }
+
+    async function verificarLembretes() {
+      if (!client) return;
+
+      const agora = new Date().toISOString();
+      const { data } = await client
+        .from('notes')
+        .select('*')
+        .eq('reminder_sent', false)
+        .not('reminder_at', 'is', null)
+        .lte('reminder_at', agora);
+
+      if (!data || data.length === 0) return;
+
+      for (const nota of data) {
+        // Notificação nativa do browser
+        if (Notification.permission === 'granted') {
+          new Notification(`⚡ ${nota.title}`, {
+            body: nota.description || 'Tens um lembrete!',
+            icon: '/assets/icon.png'
+          });
+        }
+
+        // Toast in-app
+        mostrarToast(`⏰ Lembrete: ${nota.title}`, 'info');
+
+        // Marcar como enviado
+        await client.from('notes').update({ reminder_sent: true }).eq('id', nota.id);
+      }
+
+      // Atualizar lista local se estiver na vista de lembretes
+      if (vistaAtiva === 'reminders') {
+        await carregarNotas();
+        renderizarNota();
+      }
+    }
+
+    // =============================================
+    // H. UX — TOASTS, CONFIRMAÇÃO, MOBILE
+    // =============================================
+    function mostrarToast(msg, tipo = 'info', duracao = 3000) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast ${tipo}`;
+      toast.textContent = msg;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(8px)';
+        toast.style.transition = 'opacity 0.3s, transform 0.3s';
+        setTimeout(() => toast.remove(), 300);
+      }, duracao);
+    }
+
+    function mostrarConfirm(msg, callback) {
+      document.getElementById('modal-confirm-msg').textContent = msg;
+      document.getElementById('modal-confirm-overlay').classList.add('visible');
+      confirmCallback = callback;
+    }
+
+    function fecharConfirm(confirmar) {
+      document.getElementById('modal-confirm-overlay').classList.remove('visible');
+      if (confirmar && confirmCallback) confirmCallback();
+      confirmCallback = null;
+    }
+
+    function abrirSidebar() {
+      document.getElementById('sidebar').classList.add('open');
+      document.getElementById('sidebar-overlay').classList.add('visible');
+    }
+
+    function fecharSidebar() {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebar-overlay').classList.remove('visible');
+    }
+
+    // Utilitário — escapar HTML para prevenir XSS
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>
