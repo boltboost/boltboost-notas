@@ -1,0 +1,1688 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>BoltBoost — A tua mente, organizada. Em segundos.</title>
+  <meta name="description" content="A plataforma de notas com IA mais rápida do mercado. Organiza o teu dia, gere clientes e nunca percas uma ideia. Pede acesso antecipado." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Karla:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* =============================================
+       RESET E VARIÁVEIS
+    ============================================= */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #0a0a0c;
+      --surface:    #111114;
+      --surface2:   #1a1a1e;
+      --surface3:   #242428;
+      --accent:     #f0a020;
+      --accent-dim: rgba(240,160,32,0.12);
+      --accent-glow:rgba(240,160,32,0.25);
+      --text:       #f0f0f0;
+      --text-muted: #888;
+      --text-dim:   #444;
+      --border:     rgba(255,255,255,0.07);
+      --radius:     14px;
+      --radius-lg:  24px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Karla', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* =============================================
+       NAVBAR
+    ============================================= */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 16px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background 0.4s, backdrop-filter 0.4s, border-color 0.4s;
+      border-bottom: 1px solid transparent;
+    }
+
+    nav.scrolled {
+      background: rgba(10,10,12,0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-color: var(--border);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .nav-logo img { height: 30px; }
+
+    .nav-cta {
+      background: var(--accent);
+      color: #000;
+      font-family: 'Karla', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 10px 22px;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .nav-cta:hover {
+      transform: scale(1.04);
+      box-shadow: 0 0 24px var(--accent-glow);
+    }
+
+    /* =============================================
+       HERO
+    ============================================= */
+    #hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      padding: 120px 40px 80px;
+    }
+
+    /* Gradiente e brilho de fundo */
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 70% 50%, rgba(240,160,32,0.06) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 40% at 20% 20%, rgba(80,144,224,0.04) 0%, transparent 60%),
+        var(--bg);
+      z-index: 0;
+    }
+
+    /* Linhas de grade subtis */
+    .hero-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+      z-index: 0;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      gap: 60px;
+    }
+
+    .hero-content { max-width: 560px; }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent-dim);
+      border: 1px solid rgba(240,160,32,0.2);
+      border-radius: 50px;
+      padding: 6px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 28px;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeUp 0.6s ease 0.1s forwards;
+    }
+
+    .hero-badge::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 2s ease infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    .hero-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(40px, 5.5vw, 72px);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 24px;
+      opacity: 0;
+      transform: translateY(30px);
+      animation: fadeUp 0.7s ease 0.2s forwards;
+    }
+
+    .hero-title .accent { color: var(--accent); }
+
+    .hero-subtitle {
+      font-size: clamp(16px, 1.8vw, 20px);
+      color: var(--text-muted);
+      font-weight: 400;
+      line-height: 1.7;
+      margin-bottom: 40px;
+      opacity: 0;
+      transform: translateY(30px);
+      animation: fadeUp 0.7s ease 0.35s forwards;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      opacity: 0;
+      transform: translateY(30px);
+      animation: fadeUp 0.7s ease 0.5s forwards;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+      font-family: 'Karla', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      padding: 16px 32px;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-primary:hover {
+      transform: scale(1.04);
+      box-shadow: 0 0 40px var(--accent-glow);
+    }
+
+    .btn-secondary {
+      color: var(--text-muted);
+      font-family: 'Karla', sans-serif;
+      font-weight: 500;
+      font-size: 15px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+    }
+
+    .btn-secondary:hover { color: var(--text); }
+
+    .hero-stats {
+      display: flex;
+      gap: 32px;
+      margin-top: 48px;
+      opacity: 0;
+      animation: fadeUp 0.7s ease 0.65s forwards;
+    }
+
+    .stat-item { text-align: left; }
+    .stat-number {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .stat-label { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+
+    /* Mockup do telemóvel */
+    .hero-visual {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      transform: translateY(40px) scale(0.95);
+      animation: fadeUp 0.9s ease 0.4s forwards;
+    }
+
+    .phone-mockup {
+      width: 280px;
+      background: #1a1a1e;
+      border-radius: 44px;
+      padding: 12px;
+      border: 2px solid rgba(255,255,255,0.1);
+      box-shadow:
+        0 40px 80px rgba(0,0,0,0.6),
+        0 0 60px rgba(240,160,32,0.08),
+        inset 0 1px 0 rgba(255,255,255,0.1);
+      position: relative;
+    }
+
+    .phone-notch {
+      width: 100px;
+      height: 28px;
+      background: #111;
+      border-radius: 0 0 20px 20px;
+      margin: 0 auto 8px;
+    }
+
+    .phone-screen {
+      background: #0e0e10;
+      border-radius: 32px;
+      overflow: hidden;
+      padding: 16px 12px;
+      min-height: 480px;
+    }
+
+    .phone-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .phone-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 14px;
+      color: var(--accent);
+    }
+
+    .phone-note {
+      background: #1a1a1e;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 8px;
+      border-left: 3px solid var(--accent);
+    }
+
+    .phone-note-title {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .phone-note-text {
+      font-size: 10px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .phone-note.red   { border-color: #e05050; }
+    .phone-note.blue  { border-color: #5090e0; }
+    .phone-note.green { border-color: #4caf80; }
+
+    .phone-badge {
+      display: inline-block;
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 10px;
+      margin-top: 4px;
+    }
+
+    .phone-badge.alta  { background: rgba(224,80,80,0.15); color: #e05050; }
+    .phone-badge.media { background: rgba(240,160,32,0.15); color: #f0a020; }
+    .phone-badge.baixa { background: rgba(80,144,224,0.15); color: #5090e0; }
+
+    .phone-fab {
+      position: absolute;
+      bottom: 24px;
+      right: 24px;
+      width: 40px;
+      height: 40px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: #000;
+      font-weight: 300;
+    }
+
+    /* Floating elements */
+    .float-card {
+      position: absolute;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px 16px;
+      font-size: 12px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      animation: float 4s ease-in-out infinite;
+    }
+
+    .float-card.left {
+      left: -40px;
+      top: 30%;
+      animation-delay: 0s;
+    }
+
+    .float-card.right {
+      right: -30px;
+      top: 60%;
+      animation-delay: 2s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    /* =============================================
+       SECÇÕES GERAIS
+    ============================================= */
+    section {
+      padding: 120px 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(32px, 4vw, 56px);
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 20px;
+    }
+
+    .section-subtitle {
+      font-size: 18px;
+      color: var(--text-muted);
+      line-height: 1.7;
+      max-width: 560px;
+      margin-bottom: 64px;
+    }
+
+    /* =============================================
+       FEATURES
+    ============================================= */
+    #features { padding-top: 80px; }
+
+    #features > .features-wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .features-header { text-align: center; }
+    .features-header .section-subtitle { margin: 0 auto 64px; }
+
+    /* Mockups lado a lado */
+    .device-showcase {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 40px;
+      align-items: center;
+      margin-bottom: 80px;
+    }
+
+    .browser-mockup {
+      background: #1a1a1e;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.1);
+      overflow: hidden;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+    }
+
+    .browser-bar {
+      background: #242428;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .browser-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+    }
+
+    .browser-dot.red   { background: #e05050; }
+    .browser-dot.amber { background: #f0a020; }
+    .browser-dot.green { background: #4caf80; }
+
+    .browser-url {
+      flex: 1;
+      background: #1a1a1e;
+      border-radius: 6px;
+      height: 24px;
+      margin: 0 12px;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .browser-content {
+      padding: 20px;
+      min-height: 280px;
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 16px;
+    }
+
+    .browser-sidebar {
+      background: #111114;
+      border-radius: 10px;
+      padding: 12px;
+    }
+
+    .browser-sidebar-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 12px;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    .browser-nav-item {
+      height: 28px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 6px;
+      margin-bottom: 4px;
+    }
+
+    .browser-nav-item.active {
+      background: var(--accent-dim);
+    }
+
+    .browser-notes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      align-content: start;
+    }
+
+    .browser-note-card {
+      background: #111114;
+      border-radius: 8px;
+      padding: 10px;
+      border-left: 3px solid var(--accent);
+    }
+
+    .browser-note-card.r { border-color: #e05050; }
+    .browser-note-card.b { border-color: #5090e0; }
+    .browser-note-card.g { border-color: #4caf80; }
+
+    .browser-note-line {
+      height: 8px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 4px;
+      margin-bottom: 5px;
+    }
+
+    .browser-note-line.short { width: 60%; }
+
+    /* Features grid */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 60px;
+    }
+
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      transition: border-color 0.3s, transform 0.3s;
+    }
+
+    .feature-card:hover {
+      border-color: rgba(240,160,32,0.25);
+      transform: translateY(-4px);
+    }
+
+    .feature-icon {
+      font-size: 32px;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .feature-title {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .feature-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .section-cta {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    /* =============================================
+       REVIEWS
+    ============================================= */
+    #reviews {
+      background: var(--surface);
+      max-width: none;
+      padding: 120px 40px;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    #reviews .reviews-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .reviews-header { text-align: center; margin-bottom: 64px; }
+    .reviews-header .section-subtitle { margin: 0 auto; }
+
+    .reviews-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 60px;
+    }
+
+    .review-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: border-color 0.3s;
+    }
+
+    .review-card:hover { border-color: rgba(240,160,32,0.2); }
+
+    .review-stars { color: var(--accent); font-size: 14px; letter-spacing: 2px; }
+
+    .review-text {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.7;
+      flex: 1;
+      font-style: italic;
+    }
+
+    .review-author {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .review-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: #000;
+      flex-shrink: 0;
+    }
+
+    .review-name { font-size: 14px; font-weight: 600; }
+    .review-role { font-size: 12px; color: var(--text-dim); }
+
+    /* =============================================
+       FAQ
+    ============================================= */
+    #faq { text-align: left; }
+    #faq .faq-header { text-align: center; margin-bottom: 64px; }
+
+    .faq-list { max-width: 800px; margin: 0 auto 60px; }
+
+    .faq-item {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .faq-question {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 0;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      gap: 16px;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .faq-question:hover { color: var(--accent); }
+
+    .faq-chevron {
+      font-size: 18px;
+      color: var(--text-dim);
+      transition: transform 0.3s;
+      flex-shrink: 0;
+    }
+
+    .faq-item.open .faq-chevron { transform: rotate(180deg); color: var(--accent); }
+
+    .faq-answer {
+      font-size: 15px;
+      color: var(--text-muted);
+      line-height: 1.8;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease, padding 0.3s ease;
+    }
+
+    .faq-item.open .faq-answer {
+      max-height: 300px;
+      padding-bottom: 24px;
+    }
+
+    /* =============================================
+       FOOTER CTA FINAL
+    ============================================= */
+    #cta-final {
+      text-align: center;
+      padding: 120px 40px;
+      background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(240,160,32,0.08) 0%, transparent 70%);
+      border-top: 1px solid var(--border);
+    }
+
+    #cta-final .section-title { font-size: clamp(36px, 5vw, 64px); }
+    #cta-final .section-subtitle { margin: 0 auto 40px; text-align: center; }
+
+    /* =============================================
+       FOOTER
+    ============================================= */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .footer-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 16px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .footer-logo img { height: 24px; }
+
+    footer p {
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    /* =============================================
+       POP-UP DE LEADS
+    ============================================= */
+    .popup-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      backdrop-filter: blur(8px);
+    }
+
+    .popup-overlay.visible { display: flex; }
+
+    .popup {
+      background: var(--surface);
+      border: 1px solid rgba(240,160,32,0.2);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      width: 100%;
+      max-width: 480px;
+      position: relative;
+      animation: popupIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    }
+
+    @keyframes popupIn {
+      from { opacity: 0; transform: scale(0.92) translateY(20px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .popup-close {
+      position: absolute;
+      top: 16px; right: 16px;
+      background: var(--surface2);
+      border: none;
+      color: var(--text-muted);
+      font-size: 18px;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .popup-close:hover { background: var(--surface3); color: var(--text); }
+
+    .popup-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--accent-dim);
+      border: 1px solid rgba(240,160,32,0.2);
+      border-radius: 50px;
+      padding: 4px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 16px;
+    }
+
+    .popup h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      line-height: 1.2;
+    }
+
+    .popup p {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+      line-height: 1.6;
+    }
+
+    .popup-form { display: flex; flex-direction: column; gap: 14px; }
+
+    .popup-field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+
+    .popup-field input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: var(--text);
+      font-family: 'Karla', sans-serif;
+      font-size: 15px;
+      transition: border-color 0.2s;
+    }
+
+    .popup-field input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .popup-field input::placeholder { color: var(--text-dim); }
+
+    .popup-submit {
+      background: var(--accent);
+      color: #000;
+      font-family: 'Karla', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      padding: 14px;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin-top: 8px;
+    }
+
+    .popup-submit:hover {
+      transform: scale(1.02);
+      box-shadow: 0 0 30px var(--accent-glow);
+    }
+
+    .popup-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .popup-success {
+      text-align: center;
+      padding: 20px 0;
+      display: none;
+    }
+
+    .popup-success .success-icon { font-size: 56px; margin-bottom: 16px; }
+    .popup-success h3 { font-family: 'Playfair Display', serif; font-size: 22px; margin-bottom: 10px; }
+    .popup-success p { font-size: 14px; color: var(--text-muted); }
+
+    .popup-error {
+      background: rgba(224,80,80,0.1);
+      border: 1px solid rgba(224,80,80,0.3);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #e05050;
+      display: none;
+      margin-top: 8px;
+    }
+
+    .popup-error.visible { display: block; }
+
+    /* =============================================
+       SCROLL REVEAL
+    ============================================= */
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+    .reveal-delay-5 { transition-delay: 0.5s; }
+    .reveal-delay-6 { transition-delay: 0.6s; }
+
+    /* =============================================
+       ANIMAÇÕES
+    ============================================= */
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* =============================================
+       RESPONSIVO — MOBILE
+    ============================================= */
+    @media (max-width: 900px) {
+      nav { padding: 14px 20px; }
+
+      #hero { padding: 100px 20px 60px; }
+
+      .hero-inner {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 40px;
+      }
+
+      .hero-content { max-width: none; }
+
+      .hero-actions {
+        justify-content: center;
+      }
+
+      .hero-stats {
+        justify-content: center;
+      }
+
+      .hero-visual { order: -1; }
+
+      .phone-mockup { width: 220px; }
+      .phone-screen { min-height: 360px; }
+
+      .float-card.left,
+      .float-card.right { display: none; }
+
+      section { padding: 80px 20px; }
+
+      #reviews { padding: 80px 20px; }
+
+      .features-grid { grid-template-columns: 1fr; }
+
+      .device-showcase {
+        grid-template-columns: 1fr;
+      }
+
+      .phone-mockup-small { display: none; }
+
+      .reviews-grid { grid-template-columns: 1fr; }
+
+      .popup { padding: 28px 20px; }
+
+      footer { flex-direction: column; text-align: center; }
+
+      #cta-final { padding: 80px 20px; }
+    }
+
+    @media (max-width: 600px) {
+      .hero-stats { gap: 20px; }
+      .stat-number { font-size: 22px; }
+      .nav-cta { padding: 8px 16px; font-size: 13px; }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav id="navbar">
+    <a class="nav-logo" href="#">
+      <img src="logo.png" alt="BoltBoost" />
+      BoltBoost
+    </a>
+    <button class="nav-cta" onclick="abrirPopup()">Pedir acesso →</button>
+  </nav>
+
+  <!-- =============================================
+       HERO
+  ============================================= -->
+  <section id="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+
+    <div class="hero-inner">
+      <div class="hero-content">
+        <div class="hero-badge">⚡ Early Access — Vagas Limitadas</div>
+
+        <h1 class="hero-title">
+          A tua mente,<br />
+          organizada.<br />
+          <span class="accent">Em segundos.</span>
+        </h1>
+
+        <p class="hero-subtitle">
+          A plataforma de notas com inteligência artificial que transforma caos em clareza. Ultra-rápida, mobile-first e construída para profissionais que não têm tempo a perder.
+        </p>
+
+        <div class="hero-actions">
+          <button class="btn-primary" onclick="abrirPopup()">
+            Quero acesso antecipado
+          </button>
+          <button class="btn-secondary" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">
+            Ver como funciona →
+          </button>
+        </div>
+
+        <div class="hero-stats">
+          <div class="stat-item">
+            <div class="stat-number">5s</div>
+            <div class="stat-label">Para criar uma nota</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">100%</div>
+            <div class="stat-label">Privado e seguro</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">IA</div>
+            <div class="stat-label">Integrada nativamente</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div style="position:relative;">
+          <div class="phone-mockup">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="phone-header">
+                <span class="phone-logo">⚡ BoltBoost</span>
+                <span style="font-size:10px; color:var(--text-dim);">Hoje</span>
+              </div>
+
+              <div class="phone-note">
+                <div class="phone-note-title">Reunião com cliente A</div>
+                <div class="phone-note-text">Preparar proposta de automação para Q2. Falar sobre ROI e timeline.</div>
+                <span class="phone-badge alta">alta</span>
+              </div>
+
+              <div class="phone-note blue">
+                <div class="phone-note-title">Ideias de marketing</div>
+                <div class="phone-note-text">Testar LinkedIn Ads com público 35-45, Portugal.</div>
+                <span class="phone-badge baixa">baixa</span>
+              </div>
+
+              <div class="phone-note green">
+                <div class="phone-note-title">Plano do dia — IA</div>
+                <div class="phone-note-text">⚡ Sugestão: começa pelas tarefas de alta prioridade antes das 11h.</div>
+                <span class="phone-badge media">média</span>
+              </div>
+
+              <div class="phone-note red">
+                <div class="phone-note-title">Follow-up cliente B</div>
+                <div class="phone-note-text">Enviar proposta até sexta. ⏰ Lembrete: qui 17h00</div>
+                <span class="phone-badge alta">alta</span>
+              </div>
+            </div>
+            <div class="phone-fab">＋</div>
+          </div>
+
+          <div class="float-card left">
+            <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px;">⚡ Nova nota criada</div>
+            <div style="font-size:12px; font-weight:600;">Reunião com cliente A</div>
+          </div>
+
+          <div class="float-card right">
+            <div style="font-size:11px; color:var(--accent); margin-bottom:4px;">🤖 Sugestão da IA</div>
+            <div style="font-size:11px; color:var(--text-muted);">Tens 3 tarefas urgentes hoje</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =============================================
+       FEATURES
+  ============================================= -->
+  <div id="features" style="background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+  <section>
+    <div class="features-header reveal">
+      <div class="section-label">Funcionalidades</div>
+      <h2 class="section-title">Tudo o que precisas.<br />Nada do que não precisas.</h2>
+      <p class="section-subtitle">Construída para ser rápida, intuitiva e poderosa — sem curva de aprendizagem.</p>
+    </div>
+
+    <!-- Mockup desktop + mobile -->
+    <div class="device-showcase reveal">
+      <div class="browser-mockup">
+        <div class="browser-bar">
+          <div class="browser-dot red"></div>
+          <div class="browser-dot amber"></div>
+          <div class="browser-dot green"></div>
+          <div class="browser-url">⚡ boltboost-notas.vercel.app</div>
+        </div>
+        <div class="browser-content">
+          <div class="browser-sidebar">
+            <div class="browser-sidebar-logo">⚡ BoltBoost</div>
+            <div class="browser-nav-item active"></div>
+            <div class="browser-nav-item"></div>
+            <div style="margin-top:12px; font-size:9px; color:var(--text-dim); padding:0 4px; margin-bottom:6px;">PASTAS</div>
+            <div class="browser-nav-item"></div>
+            <div class="browser-nav-item"></div>
+            <div class="browser-nav-item"></div>
+          </div>
+          <div class="browser-notes">
+            <div class="browser-note-card">
+              <div class="browser-note-line"></div>
+              <div class="browser-note-line short"></div>
+            </div>
+            <div class="browser-note-card r">
+              <div class="browser-note-line"></div>
+              <div class="browser-note-line short"></div>
+            </div>
+            <div class="browser-note-card b">
+              <div class="browser-note-line"></div>
+              <div class="browser-note-line short"></div>
+            </div>
+            <div class="browser-note-card g">
+              <div class="browser-note-line"></div>
+              <div class="browser-note-line short"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone-mockup-small" style="width:140px;">
+        <div style="background:#1a1a1e; border-radius:28px; padding:8px; border:1.5px solid rgba(255,255,255,0.1); box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+          <div style="width:60px; height:16px; background:#111; border-radius:0 0 12px 12px; margin: 0 auto 6px;"></div>
+          <div style="background:#0e0e10; border-radius:20px; padding:10px; min-height:220px;">
+            <div style="font-family:'Playfair Display',serif; font-size:9px; color:var(--accent); margin-bottom:10px;">⚡ BoltBoost</div>
+            <div style="background:#1a1a1e; border-radius:6px; padding:8px; margin-bottom:5px; border-left:2px solid var(--accent);">
+              <div style="height:6px; background:rgba(255,255,255,0.1); border-radius:3px; margin-bottom:3px;"></div>
+              <div style="height:6px; width:60%; background:rgba(255,255,255,0.06); border-radius:3px;"></div>
+            </div>
+            <div style="background:#1a1a1e; border-radius:6px; padding:8px; margin-bottom:5px; border-left:2px solid #e05050;">
+              <div style="height:6px; background:rgba(255,255,255,0.1); border-radius:3px; margin-bottom:3px;"></div>
+              <div style="height:6px; width:70%; background:rgba(255,255,255,0.06); border-radius:3px;"></div>
+            </div>
+            <div style="background:#1a1a1e; border-radius:6px; padding:8px; border-left:2px solid #5090e0;">
+              <div style="height:6px; background:rgba(255,255,255,0.1); border-radius:3px; margin-bottom:3px;"></div>
+              <div style="height:6px; width:50%; background:rgba(255,255,255,0.06); border-radius:3px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features grid -->
+    <div class="features-grid">
+      <div class="feature-card reveal reveal-delay-1">
+        <span class="feature-icon">⚡</span>
+        <div class="feature-title">Ultra-rápida</div>
+        <p class="feature-desc">Cria uma nota em menos de 5 segundos. Interface desenhada para velocidade — sem distrações, sem fricção.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-2">
+        <span class="feature-icon">🤖</span>
+        <div class="feature-title">IA integrada</div>
+        <p class="feature-desc">Inteligência artificial que analisa as tuas notas e sugere como organizar o teu dia. Prioridades automáticas, contexto inteligente.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-3">
+        <span class="feature-icon">📱</span>
+        <div class="feature-title">Mobile-first</div>
+        <p class="feature-desc">Desenhada primeiro para o telemóvel. Funciona na perfeição em qualquer ecrã — do iPhone ao desktop.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-4">
+        <span class="feature-icon">🗂️</span>
+        <div class="feature-title">Organização inteligente</div>
+        <p class="feature-desc">Pastas hierárquicas, prioridades com cores e lembretes. Tudo organizado de forma visual e intuitiva.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-5">
+        <span class="feature-icon">🔔</span>
+        <div class="feature-title">Lembretes precisos</div>
+        <p class="feature-desc">Define lembretes para qualquer nota. Recebe notificações no momento certo, diretamente no browser ou telemóvel.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-6">
+        <span class="feature-icon">🔒</span>
+        <div class="feature-title">100% privado</div>
+        <p class="feature-desc">Os teus dados são teus. Segurança ao nível bancário com Row Level Security — ninguém acede às tuas notas.</p>
+      </div>
+    </div>
+
+    <div class="section-cta reveal">
+      <button class="btn-primary" onclick="abrirPopup()">Quero experimentar grátis</button>
+    </div>
+  </section>
+  </div>
+
+  <!-- =============================================
+       REVIEWS
+  ============================================= -->
+  <div id="reviews">
+    <div class="reviews-inner">
+      <div class="reviews-header reveal">
+        <div class="section-label">Testemunhos</div>
+        <h2 class="section-title">O que dizem os primeiros utilizadores</h2>
+        <p class="section-subtitle">Profissionais de todo o país já estão a usar o BoltBoost para organizar o seu dia.</p>
+      </div>
+
+      <div class="reviews-grid">
+        <div class="review-card reveal reveal-delay-1">
+          <div class="review-stars">★★★★★</div>
+          <p class="review-text">"Finalmente uma app de notas que não me faz perder tempo. Crio uma nota em 5 segundos e encontro tudo em 2. É isto que eu precisava."</p>
+          <div class="review-author">
+            <div class="review-avatar" style="background:#f0a020;">MF</div>
+            <div>
+              <div class="review-name">Miguel Ferreira</div>
+              <div class="review-role">Consultor de Marketing Digital</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="review-card reveal reveal-delay-2">
+          <div class="review-stars">★★★★★</div>
+          <p class="review-text">"A funcionalidade de IA para planear o dia é incrível. De manhã abro o BoltBoost e já sei o que tenho de fazer. Poupei pelo menos 1 hora por dia."</p>
+          <div class="review-author">
+            <div class="review-avatar" style="background:#5090e0;">AC</div>
+            <div>
+              <div class="review-name">Ana Costa</div>
+              <div class="review-role">Empreendedora, CEO de startup</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="review-card reveal reveal-delay-3">
+          <div class="review-stars">★★★★★</div>
+          <p class="review-text">"Uso no telemóvel durante as reuniões com clientes. É tão rápido que consigo tomar notas sem perder o fio à meada. Os clientes ficam impressionados."</p>
+          <div class="review-author">
+            <div class="review-avatar" style="background:#4caf80;">RL</div>
+            <div>
+              <div class="review-name">Rui Lopes</div>
+              <div class="review-role">Consultor de Vendas B2B</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="review-card reveal reveal-delay-1">
+          <div class="review-stars">★★★★★</div>
+          <p class="review-text">"As pastas por cliente são perfeitas para o meu trabalho. Tenho tudo organizado — notas de reunião, propostas, follow-ups. Nunca mais perdi nada."</p>
+          <div class="review-author">
+            <div class="review-avatar" style="background:#e05050;">IS</div>
+            <div>
+              <div class="review-name">Inês Silva</div>
+              <div class="review-role">Gestora de Contas, Agência Digital</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="review-card reveal reveal-delay-2">
+          <div class="review-stars">★★★★★</div>
+          <p class="review-text">"Já experimentei o Notion, o Evernote e outros. O BoltBoost é o único que não me faz pensar — simplesmente funciona. A curva de aprendizagem é zero."</p>
+          <div class="review-author">
+            <div class="review-avatar" style="background:#9b59b6;">JO</div>
+            <div>
+              <div class="review-name">João Oliveira</div>
+              <div class="review-role">Freelancer, Desenvolvimento Web</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="review-card reveal reveal-delay-3">
+          <div class="review-stars">★★★★★</div>
+          <p class="review-text">"Os lembretes salvaram-me de perder um prazo importante com um cliente. A notificação apareceu no momento certo e consegui entregar a tempo."</p>
+          <div class="review-author">
+            <div class="review-avatar" style="background:#1abc9c;">CM</div>
+            <div>
+              <div class="review-name">Catarina Martins</div>
+              <div class="review-role">Advogada, escritório próprio</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="review-card reveal reveal-delay-1">
+          <div class="review-stars">★★★★★</div>
+          <p class="review-text">"O dark mode é perfeito. Trabalho até tarde e outras apps cansam os olhos. O BoltBoost é confortável mesmo à meia-noite. Design impecável."</p>
+          <div class="review-author">
+            <div class="review-avatar" style="background:#e67e22;">TR</div>
+            <div>
+              <div class="review-name">Tomás Rodrigues</div>
+              <div class="review-role">Designer UX/UI, Freelancer</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="review-card reveal reveal-delay-2">
+          <div class="review-stars">★★★★★</div>
+          <p class="review-text">"Sou arquiteta e tenho dezenas de projetos em simultâneo. O sistema de pastas do BoltBoost é exatamente o que precisava. Cada projeto no seu sítio."</p>
+          <div class="review-author">
+            <div class="review-avatar" style="background:#e91e63;">SP</div>
+            <div>
+              <div class="review-name">Sofia Pinto</div>
+              <div class="review-role">Arquiteta, atelier independente</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="review-card reveal reveal-delay-3">
+          <div class="review-stars">★★★★★</div>
+          <p class="review-text">"A IA do BoltBoost percebe o contexto das minhas notas. Não é só um chatbot — é como ter um assistente que conhece o meu trabalho. Impressionante."</p>
+          <div class="review-author">
+            <div class="review-avatar" style="background:#3498db;">PN</div>
+            <div>
+              <div class="review-name">Paulo Nunes</div>
+              <div class="review-role">Diretor Comercial, PME Industrial</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="review-card reveal reveal-delay-1" style="grid-column: 1 / -1; max-width: 480px; margin: 0 auto; width:100%;">
+          <div class="review-stars">★★★★★</div>
+          <p class="review-text">"Recomendo a toda a gente da minha equipa. Deixámos de usar emails para tomar notas de reunião e passámos todos para o BoltBoost. A produtividade subiu visivelmente."</p>
+          <div class="review-author">
+            <div class="review-avatar" style="background:#f39c12;">BM</div>
+            <div>
+              <div class="review-name">Beatriz Mendes</div>
+              <div class="review-role">COO, empresa de consultoria</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-cta reveal">
+        <button class="btn-primary" onclick="abrirPopup()">Junta-te a eles — pede acesso</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================================
+       FAQ
+  ============================================= -->
+  <section id="faq">
+    <div class="faq-header reveal">
+      <div class="section-label">FAQ</div>
+      <h2 class="section-title">Tens dúvidas?<br />Nós temos respostas.</h2>
+      <p class="section-subtitle" style="margin: 0 auto 64px;">Tudo o que precisas de saber antes de pedires acesso antecipado.</p>
+    </div>
+
+    <div class="faq-list">
+      <div class="faq-item reveal">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          O que é o acesso antecipado?
+          <span class="faq-chevron">▾</span>
+        </div>
+        <div class="faq-answer">O acesso antecipado é um programa limitado para os primeiros utilizadores que querem experimentar o BoltBoost antes do lançamento oficial. Vais ter acesso à plataforma completa, dar feedback e ajudar a moldar o produto. As vagas são limitadas e a seleção é feita pela nossa equipa.</div>
+      </div>
+
+      <div class="faq-item reveal reveal-delay-1">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          Quanto custa o BoltBoost?
+          <span class="faq-chevron">▾</span>
+        </div>
+        <div class="faq-answer">Durante o período de acesso antecipado, o BoltBoost é completamente gratuito para todos os utilizadores selecionados. Após o lançamento oficial, haverá um plano gratuito com funcionalidades base e planos premium para funcionalidades avançadas. Os utilizadores early access terão condições especiais.</div>
+      </div>
+
+      <div class="faq-item reveal reveal-delay-2">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          Como funciona a inteligência artificial?
+          <span class="faq-chevron">▾</span>
+        </div>
+        <div class="faq-answer">A IA do BoltBoost analisa as tuas notas, identifica padrões e sugere como organizar o teu dia. Pode priorizar tarefas automaticamente, agrupar notas relacionadas e até sugerir o melhor momento para fazer follow-up com clientes. Tudo de forma privada — os teus dados nunca são usados para treinar modelos externos.</div>
+      </div>
+
+      <div class="faq-item reveal">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          Os meus dados estão seguros?
+          <span class="faq-chevron">▾</span>
+        </div>
+        <div class="faq-answer">Sim, a 100%. Utilizamos Row Level Security (RLS) no Supabase, o que significa que tecnicamente é impossível aceder às notas de outro utilizador. Os dados são encriptados em trânsito e em repouso. Não vendemos nem partilhamos os teus dados com terceiros, nunca.</div>
+      </div>
+
+      <div class="faq-item reveal reveal-delay-1">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          Funciona no iPhone e Android?
+          <span class="faq-chevron">▾</span>
+        </div>
+        <div class="faq-answer">Sim. O BoltBoost é uma Progressive Web App (PWA) — funciona em qualquer browser, em qualquer dispositivo. No iPhone podes adicioná-lo ao ecrã principal através do Safari (Partilhar → Adicionar ao ecrã inicial). No Android o processo é similar. A experiência é idêntica a uma app nativa.</div>
+      </div>
+
+      <div class="faq-item reveal reveal-delay-2">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          Preciso de instalar alguma coisa?
+          <span class="faq-chevron">▾</span>
+        </div>
+        <div class="faq-answer">Não. O BoltBoost funciona diretamente no browser — Chrome, Safari, Firefox, Edge. Não precisas de instalar nada. Se quiseres uma experiência mais próxima de uma app, podes adicioná-lo ao ecrã principal do teu telemóvel com um toque.</div>
+      </div>
+
+      <div class="faq-item reveal">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          Posso usar em equipa?
+          <span class="faq-chevron">▾</span>
+        </div>
+        <div class="faq-answer">Neste momento, o BoltBoost é uma solução individual. Cada conta é privada e os dados não são partilhados entre utilizadores. A funcionalidade de equipas e colaboração está no nosso roadmap e será lançada numa fase posterior. Os utilizadores early access serão os primeiros a ter acesso.</div>
+      </div>
+
+      <div class="faq-item reveal reveal-delay-1">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          Como funcionam os lembretes?
+          <span class="faq-chevron">▾</span>
+        </div>
+        <div class="faq-answer">Podes definir um lembrete para qualquer nota, com data e hora específicas. O BoltBoost verifica automaticamente os teus lembretes e envia uma notificação diretamente no browser (e no telemóvel se tiveres a app no ecrã principal). Precisas de dar permissão para notificações na primeira vez que usas.</div>
+      </div>
+
+      <div class="faq-item reveal reveal-delay-2">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          Posso exportar as minhas notas?
+          <span class="faq-chevron">▾</span>
+        </div>
+        <div class="faq-answer">A funcionalidade de exportação está em desenvolvimento e será incluída numa das próximas atualizações. Suportaremos exportação em PDF, Markdown e JSON. Os teus dados são sempre teus e podes pedir uma exportação completa em qualquer momento.</div>
+      </div>
+
+      <div class="faq-item reveal">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          Quando vou receber acesso após preencher o formulário?
+          <span class="faq-chevron">▾</span>
+        </div>
+        <div class="faq-answer">A nossa equipa analisa os pedidos semanalmente. Entraremos em contacto por email ou telefone no prazo de 3 a 5 dias úteis. Se fores selecionado, receberás instruções de acesso imediatamente. As vagas são limitadas, por isso não esperes — pede já o teu acesso.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =============================================
+       CTA FINAL
+  ============================================= -->
+  <div id="cta-final">
+    <div class="reveal">
+      <div class="section-label" style="text-align:center;">Acesso limitado</div>
+      <h2 class="section-title">Pronto para organizar<br />o teu dia com IA?</h2>
+      <p class="section-subtitle">Junta-te à lista de espera. Vagas limitadas para o período de early access.</p>
+      <button class="btn-primary" style="font-size:18px; padding:18px 40px;" onclick="abrirPopup()">
+        Junta-te à lista de espera →
+      </button>
+      <p style="font-size:13px; color:var(--text-dim); margin-top:20px;">Sem spam. Podes cancelar quando quiseres.</p>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-logo">
+      <img src="logo.png" alt="BoltBoost" />
+      BoltBoost
+    </div>
+    <p>© 2026 BoltBoost. Todos os direitos reservados.</p>
+    <p style="font-size:13px; color:var(--text-dim);">Feito em Portugal 🇵🇹</p>
+  </footer>
+
+  <!-- =============================================
+       POP-UP DE LEADS
+  ============================================= -->
+  <div class="popup-overlay" id="popup-overlay" onclick="fecharPopupOverlay(event)">
+    <div class="popup">
+      <button class="popup-close" onclick="fecharPopup()">✕</button>
+
+      <div id="popup-form-wrap">
+        <div class="popup-badge">⚡ Early Access</div>
+        <h2>Pede o teu acesso antecipado</h2>
+        <p>Preenche os teus dados e a nossa equipa entra em contacto em breve para te dar acesso à plataforma.</p>
+
+        <div class="popup-error" id="popup-error"></div>
+
+        <form class="popup-form" onsubmit="submeterLead(event)">
+          <div class="popup-field">
+            <label>Nome completo *</label>
+            <input type="text" id="lead-nome" placeholder="O teu nome" maxlength="100" required />
+          </div>
+          <div class="popup-field">
+            <label>Número de telefone</label>
+            <input type="tel" id="lead-telefone" placeholder="+351 912 345 678" maxlength="20" />
+          </div>
+          <div class="popup-field">
+            <label>Email *</label>
+            <input type="email" id="lead-email" placeholder="o.teu@email.com" maxlength="200" required />
+          </div>
+          <button type="submit" class="popup-submit" id="popup-submit-btn">
+            Quero acesso antecipado →
+          </button>
+        </form>
+
+        <p style="font-size:12px; color:var(--text-dim); margin-top:16px; text-align:center;">
+          Os teus dados são usados apenas para contacto. Sem spam, prometemos.
+        </p>
+      </div>
+
+      <div class="popup-success" id="popup-success">
+        <div class="success-icon">⚡</div>
+        <h3>Pedido recebido!</h3>
+        <p>A nossa equipa vai entrar em contacto contigo em breve.<br />Bem-vindo à família BoltBoost!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================================
+       JAVASCRIPT
+  ============================================= -->
+  <script>
+    'use strict';
+
+    // =============================================
+    // NAVBAR — ficar sólida ao scroll
+    // =============================================
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      navbar.classList.toggle('scrolled', window.scrollY > 40);
+    }, { passive: true });
+
+    // =============================================
+    // SCROLL REVEAL — IntersectionObserver
+    // =============================================
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // =============================================
+    // FAQ ACCORDION
+    // =============================================
+    function toggleFaq(questionEl) {
+      const item = questionEl.parentElement;
+      const estaAberto = item.classList.contains('open');
+
+      // Fechar todos
+      document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+
+      // Abrir este (se estava fechado)
+      if (!estaAberto) item.classList.add('open');
+    }
+
+    // =============================================
+    // POP-UP
+    // =============================================
+    function abrirPopup() {
+      document.getElementById('popup-overlay').classList.add('visible');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => document.getElementById('lead-nome').focus(), 100);
+    }
+
+    function fecharPopup() {
+      document.getElementById('popup-overlay').classList.remove('visible');
+      document.body.style.overflow = '';
+    }
+
+    function fecharPopupOverlay(e) {
+      if (e.target === document.getElementById('popup-overlay')) fecharPopup();
+    }
+
+    // =============================================
+    // SUBMETER LEAD
+    // =============================================
+    let supabaseClient = null;
+
+    async function inicializarSupabaseLanding() {
+      const url = localStorage.getItem('sb_url');
+      const key = localStorage.getItem('sb_key');
+      if (!url || !key) return; // sem credenciais — guardar só em consola
+      try {
+        // Carregar Supabase SDK se ainda não carregado
+        if (typeof supabase !== 'undefined') {
+          supabaseClient = supabase.createClient(url, key);
+        }
+      } catch (e) { /* silencioso */ }
+    }
+
+    inicializarSupabaseLanding();
+
+    async function submeterLead(e) {
+      e.preventDefault();
+
+      const nome  = document.getElementById('lead-nome').value.trim();
+      const tel   = document.getElementById('lead-telefone').value.trim();
+      const email = document.getElementById('lead-email').value.trim();
+      const errEl = document.getElementById('popup-error');
+      const btn   = document.getElementById('popup-submit-btn');
+
+      errEl.classList.remove('visible');
+
+      // Validações
+      if (!nome || nome.length < 2) {
+        errEl.textContent = 'Introduz o teu nome completo.';
+        errEl.classList.add('visible');
+        return;
+      }
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        errEl.textContent = 'Introduz um email válido.';
+        errEl.classList.add('visible');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'A enviar...';
+
+      // Tentar guardar no Supabase
+      if (supabaseClient) {
+        try {
+          const { error } = await supabaseClient.from('leads').insert({
+            name:  nome.substring(0, 100),
+            phone: tel.substring(0, 20) || null,
+            email: email.substring(0, 200),
+          });
+
+          if (error) {
+            // Se a tabela não existir ainda, não bloquear o utilizador
+            if (!error.message.includes('does not exist')) {
+              errEl.textContent = 'Ocorreu um erro. Tenta novamente.';
+              errEl.classList.add('visible');
+              btn.disabled = false;
+              btn.textContent = 'Quero acesso antecipado →';
+              return;
+            }
+          }
+        } catch (_) { /* silencioso */ }
+      }
+
+      // Mostrar sucesso
+      document.getElementById('popup-form-wrap').style.display = 'none';
+      document.getElementById('popup-success').style.display = 'block';
+
+      // Fechar automaticamente após 4 segundos
+      setTimeout(fecharPopup, 4000);
+      setTimeout(() => {
+        document.getElementById('popup-form-wrap').style.display = 'block';
+        document.getElementById('popup-success').style.display = 'none';
+        document.getElementById('lead-nome').value = '';
+        document.getElementById('lead-telefone').value = '';
+        document.getElementById('lead-email').value = '';
+        btn.disabled = false;
+        btn.textContent = 'Quero acesso antecipado →';
+      }, 4500);
+    }
+
+    // Fechar popup com Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') fecharPopup();
+    });
+  </script>
+
+  <!-- Carregar Supabase SDK para guardar leads -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" onload="inicializarSupabaseLanding()"></script>
+
+</body>
+</html>
