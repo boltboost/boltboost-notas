@@ -1,6 +1,4 @@
 {
-  "rewrites": [
-    { "source": "/app", "destination": "/index.html" },
-    { "source": "/landing", "destination": "/landing.html" }
-  ]
+  "cleanUrls": true,
+  "trailingSlash": false
 }
