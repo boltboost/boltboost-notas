@@ -1,4 +1,14 @@
 {
-  "cleanUrls": true,
-  "trailingSlash": false
+  "version": 2,
+  "builds": [
+    { "src": "*.html", "use": "@vercel/static" },
+    { "src": "landing/index.html", "use": "@vercel/static" },
+    { "src": "*.png", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/landing", "dest": "/landing/index.html" },
+    { "src": "/landing/", "dest": "/landing/index.html" },
+    { "src": "/app", "dest": "/index.html" },
+    { "src": "/", "dest": "/index.html" }
+  ]
 }
